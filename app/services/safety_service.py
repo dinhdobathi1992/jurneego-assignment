@@ -37,32 +37,54 @@ class SafetyCheckResult:
 # These are configurable — in production, move to a database or config file.
 
 SELF_HARM_KEYWORDS = [
-    "kill myself", "want to die", "hurt myself", "suicide",
-    "self harm", "self-harm", "cut myself", "end my life",
-    "don't want to live", "jump off", "hang myself",
-    "overdose", "take pills to die",
+    "kill myself",
+    "want to die",
+    "hurt myself",
+    "suicide",
+    "self harm",
+    "self-harm",
+    "cut myself",
+    "end my life",
+    "don't want to live",
+    "jump off",
+    "hang myself",
+    "overdose",
+    "take pills to die",
 ]
 
 SEXUAL_KEYWORDS = [
-    "sex", "porn", "naked", "nude", "explicit",
-    "sexual", "xxx", "nsfw", "adult content",
-    "genitals", "intercourse",
+    "sex",
+    "porn",
+    "naked",
+    "nude",
+    "explicit",
+    "sexual",
+    "xxx",
+    "nsfw",
+    "adult content",
+    "genitals",
+    "intercourse",
 ]
 
 MANIPULATION_KEYWORDS = [
-    "don't tell anyone", "don't tell your parents",
-    "keep this a secret", "our little secret",
-    "no one needs to know", "trust only me",
-    "your parents don't understand", "you can only trust me",
-    "run away", "leave home",
+    "don't tell anyone",
+    "don't tell your parents",
+    "keep this a secret",
+    "our little secret",
+    "no one needs to know",
+    "trust only me",
+    "your parents don't understand",
+    "you can only trust me",
+    "run away",
+    "leave home",
 ]
 
 # Regex patterns for contact info detection
 PHONE_PATTERN = re.compile(
-    r"(?:\+?\d{1,3}[-.\s]?)?"    # Optional country code
+    r"(?:\+?\d{1,3}[-.\s]?)?"  # Optional country code
     r"(?:\(?\d{2,4}\)?[-.\s]?)"  # Area code
-    r"(?:\d{3,4}[-.\s]?)"        # First part
-    r"\d{3,4}",                  # Last part
+    r"(?:\d{3,4}[-.\s]?)"  # First part
+    r"\d{3,4}",  # Last part
 )
 
 EMAIL_PATTERN = re.compile(

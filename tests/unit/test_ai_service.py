@@ -5,12 +5,8 @@ Tests the MockAIProvider and the provider factory.
 Bedrock and LiteLLM providers are not tested here (they need external APIs).
 """
 
-import pytest
-
 from app.services.ai_service import (
     AIProvider,
-    BedrockAIProvider,
-    LiteLLMAIProvider,
     MockAIProvider,
     get_ai_provider,
 )

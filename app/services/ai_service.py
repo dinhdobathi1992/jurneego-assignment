@@ -12,7 +12,6 @@ To switch providers, change the AI_PROVIDER env var:
     AI_PROVIDER=litellm   → requires LiteLLM proxy running
 """
 
-import json
 import logging
 from abc import ABC, abstractmethod
 from pathlib import Path
@@ -127,10 +126,12 @@ class BedrockAIProvider(AIProvider):
         messages = []
         for msg in conversation_history:
             role = "user" if msg["role"] == "learner" else "assistant"
-            messages.append({
-                "role": role,
-                "content": [{"text": msg["content"]}],
-            })
+            messages.append(
+                {
+                    "role": role,
+                    "content": [{"text": msg["content"]}],
+                }
+            )
 
         try:
             response = self.client.converse(

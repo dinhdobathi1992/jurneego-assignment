@@ -20,6 +20,7 @@ _SessionLocal = None
 
 class Base(DeclarativeBase):
     """Base class for all ORM models."""
+
     pass
 
 
@@ -29,8 +30,8 @@ def get_engine():
     if _engine is None:
         _engine = create_engine(
             settings.database_url,
-            pool_size=5,         # Keep 5 connections ready
-            max_overflow=10,     # Allow up to 10 extra connections under load
+            pool_size=5,  # Keep 5 connections ready
+            max_overflow=10,  # Allow up to 10 extra connections under load
             pool_pre_ping=True,  # Check if connection is alive before using it
             echo=(settings.app_env == "development"),  # Log SQL in dev mode
         )

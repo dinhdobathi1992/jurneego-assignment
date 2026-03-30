@@ -23,6 +23,7 @@ def safety():
 
 # ---------- Self-Harm Detection ----------
 
+
 class TestSelfHarmDetection:
     """Tests for self-harm and suicide-related content detection."""
 
@@ -50,6 +51,7 @@ class TestSelfHarmDetection:
 
 # ---------- Sexual Content Detection ----------
 
+
 class TestSexualContentDetection:
     """Tests for sexual/inappropriate content for minors."""
 
@@ -70,6 +72,7 @@ class TestSexualContentDetection:
 
 
 # ---------- Contact Information Detection ----------
+
 
 class TestContactInfoDetection:
     """Tests for personal information sharing detection."""
@@ -97,6 +100,7 @@ class TestContactInfoDetection:
 
 # ---------- Manipulation Detection ----------
 
+
 class TestManipulationDetection:
     """Tests for manipulative or emotionally risky content."""
 
@@ -111,32 +115,35 @@ class TestManipulationDetection:
         assert result.flag_type == FlagType.MANIPULATION
 
     def test_safe_learning_conversation(self, safety):
-        result = safety.check_message(
-            "Can you help me understand how rainbows are formed?"
-        )
+        result = safety.check_message("Can you help me understand how rainbows are formed?")
         assert result.is_safe is True
 
 
 # ---------- Safe Content (Should Pass) ----------
 
+
 class TestSafeContent:
     """Verify that normal educational content passes all safety checks."""
 
-    @pytest.mark.parametrize("message", [
-        "How do volcanoes work?",
-        "What is the speed of light?",
-        "Can you help me with my math homework?",
-        "Tell me about dinosaurs!",
-        "Why is the sky blue?",
-        "How do airplanes fly?",
-        "What are the planets in our solar system?",
-    ])
+    @pytest.mark.parametrize(
+        "message",
+        [
+            "How do volcanoes work?",
+            "What is the speed of light?",
+            "Can you help me with my math homework?",
+            "Tell me about dinosaurs!",
+            "Why is the sky blue?",
+            "How do airplanes fly?",
+            "What are the planets in our solar system?",
+        ],
+    )
     def test_educational_messages_are_safe(self, safety, message):
         result = safety.check_message(message)
         assert result.is_safe is True, f"Message should be safe: {message}"
 
 
 # ---------- Deflection Responses ----------
+
 
 class TestDeflectionResponses:
     """Verify that safe deflection responses are returned for each category."""

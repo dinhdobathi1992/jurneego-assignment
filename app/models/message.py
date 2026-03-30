@@ -9,7 +9,7 @@ Each message has:
 
 import enum
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import Boolean, DateTime, Enum, Float, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -17,7 +17,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.database import Base
 
 
-class MessageRole(str, enum.Enum):
+class MessageRole(enum.StrEnum):
     """Who sent this message."""
 
     LEARNER = "learner"
@@ -28,20 +28,16 @@ class MessageRole(str, enum.Enum):
 class Message(Base):
     __tablename__ = "messages"
 
-    id: Mapped[str] = mapped_column(
-        String(36), primary_key=True, default=lambda: str(uuid.uuid4())
-    )
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     conversation_id: Mapped[str] = mapped_column(
         String(36), ForeignKey("conversations.id", ondelete="CASCADE"), nullable=False, index=True
     )
-    role: Mapped[MessageRole] = mapped_column(
-        Enum(MessageRole), nullable=False
-    )
+    role: Mapped[MessageRole] = mapped_column(Enum(MessageRole), nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
     is_safe: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
     safety_score: Mapped[float | None] = mapped_column(Float, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
     )
 
     # Relationships

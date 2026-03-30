@@ -16,9 +16,8 @@ Core flow for sending a message:
 """
 
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
-from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.models.conversation import Conversation
@@ -91,16 +90,16 @@ class ConversationService:
         # Step 2: Safety check on learner's message
         safety_result = self.safety.check_message(content)
         learner_message.is_safe = safety_result.is_safe
-        learner_message.safety_score = safety_result.confidence if not safety_result.is_safe else 1.0
+        learner_message.safety_score = (
+            safety_result.confidence if not safety_result.is_safe else 1.0
+        )
 
         self.db.add(learner_message)
         self.db.flush()  # Get the ID without committing
 
         # Step 3: If unsafe → flag and return deflection
         if not safety_result.is_safe:
-            return self._handle_unsafe_message(
-                conversation, learner_message, safety_result
-            )
+            return self._handle_unsafe_message(conversation, learner_message, safety_result)
 
         # Step 4: If safe → generate AI response
         return self._handle_safe_message(conversation, learner_message)
@@ -188,15 +187,19 @@ class ConversationService:
         """Build the message history to send to the AI provider."""
         history = []
         for msg in conversation.messages:
-            history.append({
-                "role": msg.role.value,
-                "content": msg.content,
-            })
+            history.append(
+                {
+                    "role": msg.role.value,
+                    "content": msg.content,
+                }
+            )
         # Add the current message (not yet in conversation.messages)
-        history.append({
-            "role": "learner",
-            "content": current_message.content,
-        })
+        history.append(
+            {
+                "role": "learner",
+                "content": current_message.content,
+            }
+        )
         return history
 
     # ---------- Moderation (Teacher/Admin) ----------
@@ -233,7 +236,7 @@ class ConversationService:
 
         flag.reviewed = True
         flag.reviewer_notes = reviewer_notes
-        flag.reviewed_at = datetime.now(timezone.utc)
+        flag.reviewed_at = datetime.now(UTC)
         self.db.commit()
         self.db.refresh(flag)
 

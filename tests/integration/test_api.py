@@ -123,9 +123,7 @@ class TestMessageEndpoints:
     def test_send_safe_message_gets_ai_response(self, client):
         """CORE TEST: Safe message → AI response flow."""
         # Create conversation
-        conv = client.post(
-            "/api/conversations", json={"learner_id": "student-1"}
-        ).json()
+        conv = client.post("/api/conversations", json={"learner_id": "student-1"}).json()
 
         # Send a safe message
         response = client.post(
@@ -148,9 +146,7 @@ class TestMessageEndpoints:
 
     def test_unsafe_message_gets_flagged(self, client):
         """SAFETY TEST: Harmful message → flag + deflection."""
-        conv = client.post(
-            "/api/conversations", json={"learner_id": "student-1"}
-        ).json()
+        conv = client.post("/api/conversations", json={"learner_id": "student-1"}).json()
 
         # Send an unsafe message
         response = client.post(
@@ -165,14 +161,14 @@ class TestMessageEndpoints:
         assert data["flag_reason"] is not None
 
         # AI response should be a safe deflection, not an actual response
-        assert "trusted adult" in data["assistant_message"]["content"].lower() or \
-               "parent" in data["assistant_message"]["content"].lower()
+        assert (
+            "trusted adult" in data["assistant_message"]["content"].lower()
+            or "parent" in data["assistant_message"]["content"].lower()
+        )
 
     def test_contact_info_gets_flagged(self, client):
         """SAFETY TEST: PII sharing → flag."""
-        conv = client.post(
-            "/api/conversations", json={"learner_id": "student-1"}
-        ).json()
+        conv = client.post("/api/conversations", json={"learner_id": "student-1"}).json()
 
         response = client.post(
             f"/api/conversations/{conv['id']}/messages",
@@ -197,9 +193,7 @@ class TestModerationEndpoints:
     def test_list_flagged_conversations(self, client):
         """Create a flagged conversation, then list it."""
         # Create and flag a conversation
-        conv = client.post(
-            "/api/conversations", json={"learner_id": "student-1"}
-        ).json()
+        conv = client.post("/api/conversations", json={"learner_id": "student-1"}).json()
         client.post(
             f"/api/conversations/{conv['id']}/messages",
             json={"content": "I want to hurt myself"},
@@ -213,9 +207,7 @@ class TestModerationEndpoints:
 
     def test_get_flagged_conversation_with_reasons(self, client):
         """Get a flagged conversation with flag details."""
-        conv = client.post(
-            "/api/conversations", json={"learner_id": "student-1"}
-        ).json()
+        conv = client.post("/api/conversations", json={"learner_id": "student-1"}).json()
         client.post(
             f"/api/conversations/{conv['id']}/messages",
             json={"content": "I want to hurt myself"},
@@ -230,9 +222,7 @@ class TestModerationEndpoints:
 
     def test_unflagged_conversation_not_in_moderation(self, client):
         """A safe conversation should NOT appear in moderation."""
-        conv = client.post(
-            "/api/conversations", json={"learner_id": "student-1"}
-        ).json()
+        conv = client.post("/api/conversations", json={"learner_id": "student-1"}).json()
         client.post(
             f"/api/conversations/{conv['id']}/messages",
             json={"content": "How do rainbows form?"},

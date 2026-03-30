@@ -10,7 +10,7 @@ Each flag has:
 
 import enum
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -18,7 +18,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.database import Base
 
 
-class FlagType(str, enum.Enum):
+class FlagType(enum.StrEnum):
     """Category of safety violation detected."""
 
     SELF_HARM = "self_harm"
@@ -28,7 +28,7 @@ class FlagType(str, enum.Enum):
     OTHER = "other"
 
 
-class FlagSeverity(str, enum.Enum):
+class FlagSeverity(enum.StrEnum):
     """How serious is the violation."""
 
     LOW = "low"
@@ -39,9 +39,7 @@ class FlagSeverity(str, enum.Enum):
 class Flag(Base):
     __tablename__ = "flags"
 
-    id: Mapped[str] = mapped_column(
-        String(36), primary_key=True, default=lambda: str(uuid.uuid4())
-    )
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     conversation_id: Mapped[str] = mapped_column(
         String(36), ForeignKey("conversations.id", ondelete="CASCADE"), nullable=False, index=True
     )
@@ -54,11 +52,9 @@ class Flag(Base):
     reviewed: Mapped[bool] = mapped_column(Boolean, default=False)
     reviewer_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
     )
-    reviewed_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     # Relationships
     conversation: Mapped["Conversation"] = relationship(back_populates="flags")  # noqa: F821
