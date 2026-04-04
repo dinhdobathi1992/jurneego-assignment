@@ -42,3 +42,8 @@ Thumbs.db
 
 # Agents (local dev tools)
 .agents/
+
+
+CLAUDE.md
+CODE_WALKTHROUGH.md
+implementation_plan.md

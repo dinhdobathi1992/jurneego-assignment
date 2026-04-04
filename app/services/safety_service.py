@@ -38,6 +38,7 @@ class SafetyCheckResult:
 
 SELF_HARM_KEYWORDS = [
     "kill myself",
+    "kill my self",
     "want to die",
     "hurt myself",
     "suicide",

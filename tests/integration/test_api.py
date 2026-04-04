@@ -12,6 +12,11 @@ Tests cover the FULL FLOW:
 5. Review a flag
 """
 
+import os
+
+# Force mock AI provider for all integration tests — must be set before app import
+os.environ["AI_PROVIDER"] = "mock"
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine

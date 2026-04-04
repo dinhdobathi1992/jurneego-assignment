@@ -43,6 +43,11 @@ class TestSelfHarmDetection:
         assert result.is_safe is False
         assert result.flag_type == FlagType.SELF_HARM
 
+    def test_detects_kill_my_self_spaced(self, safety):
+        result = safety.check_message("how to kill my self?")
+        assert result.is_safe is False
+        assert result.flag_type == FlagType.SELF_HARM
+
     def test_safe_message_about_volcanoes(self, safety):
         """Educational content about 'explosive' topics should be safe."""
         result = safety.check_message("How do volcanoes erupt? Is the lava dangerous?")
