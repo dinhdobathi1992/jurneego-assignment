@@ -2,115 +2,95 @@
 
 ## Tools Used
 
-| Tool | What I used it for |
-|------|--------------------|
-| **Claude (Sonnet / Opus)** | Scaffolding, brainstorming architecture, reviewing code structure |
-| **Cursor (AI code editor)** | Inline code completion, docstring generation, test case suggestions |
+| Tool | Purpose |
+|------|---------|
+| **Claude (Sonnet / Opus)** | Scaffolding, architecture brainstorming, code review |
+| **Cursor** | Inline code completion, test case suggestions |
 
 ---
 
 ## Where AI Helped
 
-### ✅ Useful contributions
+**Project skeleton**
+AI generated the initial folder structure, `Makefile`, `.gitignore`, and `requirements.txt`. I reviewed every file, adjusted package versions, added missing entries (`.agents/` to `.gitignore`), and restructured the Makefile to match how I actually run things.
 
-**1. Project skeleton scaffolding**
-AI rapidly generated the folder structure, `Makefile`, `.gitignore`, and `requirements.txt`. This saved 30–45 minutes of boilerplate setup. I reviewed every file and adjusted versions, added missing entries (e.g. `.agents/` to `.gitignore`), and restructured the Makefile to match how I actually work.
+**Regex patterns for contact info detection**
+AI suggested the initial regex patterns for phone numbers, email addresses, and street addresses in `safety_service.py`. I tested each with edge cases and tightened the phone number pattern — the original matched short digit sequences in normal sentences.
 
-**2. Regex patterns for contact info detection**
-AI suggested the regex patterns for detecting phone numbers, email addresses, and street addresses in `safety_service.py`. I tested each pattern manually with edge cases and adjusted the phone number pattern, which was initially too broad (matching short number sequences in normal sentences like "I have 2 cats aged 3 and 4").
+**Pydantic schema structure**
+AI generated the initial schema classes. I restructured the response models — AI had combined the learner message and AI response into a flat object, which made the API response unclear. I split them into `learner_message` and `assistant_message` under `MessagePairResponse`.
 
-**3. Pydantic schema structure**
-AI generated the initial Pydantic schema classes. Useful as a starting point, but I had to restructure the response models — AI initially combined the learner message and AI response into a single flat object, which made the API unclear. I separated them into `learner_message` and `assistant_message` under a `MessagePairResponse` wrapper.
-
-**4. Test case brainstorming**
-AI suggested test cases I hadn't considered, such as testing that a safe biology question ("How do plants reproduce?") passes the sexual content filter. I added several of these edge cases to `test_safety_service.py`.
+**Test case ideas**
+AI suggested edge cases I hadn't considered, like testing that "How do plants reproduce?" passes the sexual content filter. I added several of these to `test_safety_service.py`.
 
 ---
 
-## Where AI Output Was Wrong, Weak, or Unsuitable
+## Where AI Output Was Wrong or Unsuitable
 
-### ❌ Example 1 — Permissive CORS configuration
+**Permissive CORS configuration**
 
-AI initially generated this CORS middleware configuration:
+AI generated this:
 
 ```python
-# What AI generated — INSECURE
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],   # ← allows ANY origin
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 ```
 
-**Problem:** `allow_origins=["*"]` with `allow_credentials=True` is a security misconfiguration. In production this would allow any website to make authenticated requests on behalf of the user. Browsers actually block this combination — but it shows the AI wasn't thinking about production security.
-
-**What I did:** Restricted origins to only known frontend URLs (`localhost:3000`, `localhost:5173`) and added a note that production should use the actual domain. In a real production deployment I would load the allowed origins from an environment variable.
+`allow_origins=["*"]` with `allow_credentials=True` is a security misconfiguration — browsers actually reject this combination, but it shows the AI wasn't thinking about production. I restricted origins to known local URLs and added a note that production should load them from an environment variable.
 
 ---
 
-### ❌ Example 2 — Wrong database design for flags
+**Wrong database design for flags**
 
-AI initially suggested a single `is_flagged` boolean column on the `messages` table with a `flag_reason` text field:
+AI suggested a single `is_flagged` boolean and `flag_reason` text column on the `messages` table:
 
 ```python
-# What AI generated — too simple
 class Message(Base):
     is_flagged: bool = False
     flag_reason: str | None = None
     flag_type: str | None = None
 ```
 
-**Problem:** This approach:
-- Can only store one flag per message (what if two violations are detected?)
-- Loses the severity and reviewer information
-- Makes it hard to query "all unreviewed flags sorted by severity"
-- Mixes safety metadata into the message model (violates single responsibility)
-
-**What I did:** Created a separate `flags` table as a proper one-to-many relationship. Each flag is its own record with `flag_type`, `reason`, `severity`, `reviewed`, `reviewer_notes`, and `reviewed_at`. This is the correct relational design and supports future features like bulk review, severity-based prioritization, and audit trails.
+This can only store one flag per message, loses severity and reviewer information, and mixes safety metadata into the message model. I built a separate `flags` table with `flag_type`, `reason`, `severity`, `reviewed`, `reviewer_notes`, and `reviewed_at` — proper relational design that supports future features like bulk review and severity-based prioritization.
 
 ---
 
-### ❌ Example 3 — AI suggested SQLite for simplicity
+**Suggested SQLite for simplicity**
 
-When I asked about database choices, AI suggested:
+When I asked about database choices, AI suggested SQLite because it "requires no setup." The assignment asks how to evolve this to production — starting with SQLite means migrating to Postgres later, which touches connection strings, data types, and query syntax. I chose Postgres from the start. Docker Compose makes local setup just as easy, and the production path becomes a connection string change rather than a data migration.
 
-> "For a prototype, you could use SQLite — it requires no setup and works out of the box with SQLAlchemy."
-
-**Why I rejected this:** The assignment explicitly asks about "production readiness" and how to "evolve this from local Docker Compose into a staging or production environment." Starting with SQLite would mean a migration to Postgres later — a non-trivial change that touches connection strings, data types, and possibly query syntax. I chose Postgres from day one (with Docker Compose making local setup just as easy as SQLite) because it removes an entire class of "this works locally but breaks in production" bugs.
-
-I did use SQLite for the integration test database (in-memory) because that's a legitimate pattern — tests should be fast and isolated, not depend on a running Postgres server.
+I did use in-memory SQLite for the integration test database, which is a legitimate pattern — tests should be fast and isolated.
 
 ---
 
-## One Example Where I Explicitly Rejected an AI Suggestion
+## Where I Explicitly Rejected an AI Suggestion
 
-**The suggestion:** When designing the safety layer, AI suggested using a single large list of banned keywords with a simple `any(word in content for word in BANNED_WORDS)` check:
+When designing the safety layer, AI suggested a single flat keyword list:
 
 ```python
-BANNED_WORDS = [
-    "kill", "die", "hurt", "gun", "bomb", "sex", "naked",
-    "phone", "address", "email", ...
-]
+BANNED_WORDS = ["kill", "die", "hurt", "gun", "sex", "naked", "phone", ...]
 
 def is_safe(content: str) -> bool:
     return not any(word in content.lower() for word in BANNED_WORDS)
 ```
 
-**Why I rejected it:**
-1. **Too many false positives.** The word "kill" appears in "kill two birds with one stone." The word "die" appears in "How do stars die?" (a perfectly valid astronomy question). A learner asking "Why did the dinosaurs die out?" would be blocked.
-2. **No context or category.** Treating all unsafe content identically means you can't give a category-specific deflection ("I care about you" for self-harm vs. "keep your info private" for contact info).
-3. **No severity.** "die" and "I want to die" are very different — you can't assign severity with a flat keyword list.
+The problems:
 
-**What I built instead:** Separate check functions per category (`_check_self_harm`, `_check_sexual_content`, etc.) with specific multi-word phrases and patterns that reduce false positives. Each function returns a typed `SafetyCheckResult` with `flag_type`, `reason`, and `severity`. The function checks for multi-word phrases like "hurt myself" or "kill myself" rather than single words like "hurt" or "kill."
+1. Too many false positives. "How do stars die?" is a valid astronomy question. "kill two birds with one stone" is an idiom. A flat list can't distinguish these.
+2. No categorization. You can't give a category-appropriate deflection ("I care about you" for self-harm vs. "keep your info private" for PII) if all violations are treated the same.
+3. No severity. "die" and "I want to die" are very different signals.
+
+Instead I built separate check functions per category (`_check_self_harm`, `_check_sexual_content`, etc.) using multi-word phrases and patterns. Each returns a typed `SafetyCheckResult` with `flag_type`, `reason`, and `severity`. "hurt myself" gets flagged — "hurt" alone does not.
 
 ---
 
-## Honest Assessment
+## Overall Assessment
 
-AI was most useful as a **speed multiplier for boilerplate** — the kind of code that's necessary but doesn't require deep thought (imports, model field definitions, route signatures, test fixtures). It saved roughly 2–3 hours of setup work.
+AI was most useful for boilerplate — the code that's necessary but not where the design decisions live. Every significant architectural choice (provider abstraction, separate flags table, two-layer safety, Postgres from day one) required overriding or ignoring the AI's first suggestion.
 
-AI was least useful for **design decisions** — it tends toward the simplest, most "tutorial-friendly" answer rather than the production-appropriate one. Every significant architectural decision in this codebase (the provider abstraction, the separate flags table, the two-layer safety approach, the Postgres-from-day-one choice) required me to override or ignore the AI's first suggestion.
-
-The most important habit I maintained: **I read every line of generated code.** Nothing was copy-pasted without understanding it and testing it.
+I read every line of generated code before accepting it.

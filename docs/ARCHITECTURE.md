@@ -48,7 +48,7 @@ A REST API service built with Python (FastAPI) that supports child-safe AI-assis
 
 ## Core Message Flow
 
-When a learner sends a message, this sequence happens (inside `ConversationService.send_message`):
+When a learner sends a message, this sequence happens inside `ConversationService.send_message`:
 
 ```
 1. Learner sends message
@@ -66,14 +66,14 @@ When a learner sends a message, this sequence happens (inside `ConversationServi
         │         ↓
         │   5. SafetyService.check_message(ai_response)
         │         ↓
-        │    ┌────┴─────┐
-        │    │ AI unsafe?│
-        │    └────┬─────┘
+        │    ┌────┴──────┐
+        │    │ AI unsafe? │
+        │    └────┬──────┘
         │    Yes  │   No
         │         │    ↓
         ↓         ↓   6. Save AI response to DB
    Create Flag    ↓
-   Mark conv   Return sanitized response
+   Mark conv   Return response
    flagged
         ↓
    Return safe deflection message
@@ -83,34 +83,30 @@ When a learner sends a message, this sequence happens (inside `ConversationServi
 
 ## Key Design Decisions
 
-### 1. AI Provider Abstraction (Adapter Pattern)
-All three AI backends (`Mock`, `Bedrock`, `LiteLLM`) implement a single `AIProvider` abstract class. The rest of the app only calls `generate_response()` — it doesn't know or care which backend is used. Switching providers is a one-line env var change.
+### AI Provider Abstraction (Adapter Pattern)
 
-**Why**: Isolates the app from vendor-specific SDK changes. Makes testing trivial (Mock provider never calls an external API).
+All three AI backends (`Mock`, `Bedrock`, `LiteLLM`) implement a single `AIProvider` abstract class. The rest of the app only calls `generate_response()` and doesn't know which backend is active. Switching providers is a one-line env var change with no code changes.
 
-### 2. Two-Layer Safety (Defense in Depth)
-- **Layer 1:** Keyword + regex matching — fast, zero cost, catches obvious violations immediately
+This also makes testing straightforward — the Mock provider never calls an external API, so tests run fast and offline.
+
+### Two-Layer Safety
+
+- **Layer 1:** Keyword + regex matching — runs in microseconds, zero cost, catches obvious violations
 - **Layer 2:** Optional LLM-based classification (`SAFETY_LLM_CHECK=true`) — catches nuanced manipulation that keywords miss
 
-**Why**: Same principle as network security — multiple layers. Keyword matching runs in microseconds, so it never adds latency. LLM-based safety is opt-in to control cost.
+Layer 1 always runs. Layer 2 is opt-in to keep costs predictable. The same safety pipeline runs on both the learner's input and the AI's output — an LLM can still produce harmful content even with a careful system prompt.
 
-### 3. Safety Checks on AI Output Too
-The AI's response is also checked before being returned to the learner. An LLM can still generate inappropriate content even with a good system prompt (jailbreaks, edge cases).
+### Synchronous SQLAlchemy
 
-### 4. Synchronous SQLAlchemy
-Used sync SQLAlchemy instead of async (`asyncpg`) for clarity and readability.
+Sync SQLAlchemy was chosen over async (`asyncpg`) for simplicity. The AI provider call (500–3000ms) dominates latency so heavily that async DB wouldn't change perceived performance at this scale. It's a straightforward migration when needed.
 
-**Tradeoff**: Under high concurrency, async would perform better. But for a prototype/MVP, the simpler code is more important. Adding async is a straightforward migration.
+### UUID Primary Keys
 
-### 5. UUID Primary Keys
-All IDs are UUIDs (strings), not auto-increment integers.
+All IDs are UUIDs rather than auto-increment integers — safe to expose in URLs (no sequential enumeration), compatible with distributed ID generation.
 
-**Why**: Safe to expose in URLs (no sequential guessing), works across distributed systems, and matches production standards.
+### Thin Routes, Fat Services
 
-### 6. Separation: Routes vs Services
-Route handlers are intentionally thin — they just validate input and call the service layer. All business logic lives in `ConversationService` and `SafetyService`.
-
-**Why**: Easier to test (services don't need an HTTP client), easier to reason about.
+Route handlers validate input and call services — that's it. All business logic lives in `ConversationService` and `SafetyService`. Services are independently testable without an HTTP client.
 
 ---
 
@@ -139,8 +135,6 @@ flags
 
 ### Where Latency Actually Lives
 
-A single `send_message` request involves multiple operations. Here's the latency breakdown:
-
 ```
 Operation                      Latency (typical)    % of total
 ─────────────────────────────────────────────────────────────
@@ -155,115 +149,104 @@ DB: COMMIT + REFRESH              2–5 ms              <1%
 Total (safe path)             ~510–3020 ms
 ```
 
-**The AI call is 95%+ of total latency.** Database operations are ~10-15ms combined — noise compared to the LLM round-trip.
+The AI call is 95%+ of total latency. Database operations combined are ~10–15ms.
 
-### Why PostgreSQL Is the Right Choice
-
-I considered in-memory storage (Python dicts) to reduce complexity. Here's why I kept Postgres:
+### Why PostgreSQL Over In-Memory Storage
 
 | Concern | In-Memory | PostgreSQL |
 |---------|-----------|------------|
-| **Moderation queries** | Would need custom indexing logic for "list flagged conversations" | `WHERE is_flagged = TRUE` with index — instant |
-| **Conversation history** | Lost on restart — multi-turn AI conversations break | Persistent across restarts and deploys |
-| **Data integrity** | No FK constraints, no cascade deletes | Referential integrity enforced by the engine |
-| **DevOps demonstration** | Single container, no orchestration to show | Health checks, volume mounts, service dependencies, connection pooling |
-| **Production path** | Would need to be entirely rewritten | Swap Docker Postgres for RDS — zero code change |
+| **Moderation queries** | Custom indexing logic for "list flagged conversations" | `WHERE is_flagged = TRUE` with index |
+| **Conversation history** | Lost on restart — multi-turn context breaks | Persistent across restarts and deploys |
+| **Data integrity** | No FK constraints or cascade deletes | Enforced by the engine |
+| **Production path** | Would need a full rewrite | Swap Docker Postgres for RDS, zero code change |
 
 For an assignment focused on DevOps, a real database dependency demonstrates infrastructure thinking that in-memory storage does not.
 
-### What to Optimize (If Performance Were Critical)
+### Performance Improvements Worth Making
 
-1. **Eager-load conversation history** — The `messages` relationship uses lazy loading (default), which triggers a separate `SELECT` when building AI context. Adding `lazy="selectin"` would batch this into the initial conversation query.
-
-2. **Cap history sent to AI** — Currently all messages are sent. A 20-message sliding window would bound the AI payload size and reduce token cost without affecting conversation quality.
-
-3. **Async SQLAlchemy** — Under high concurrency (100+ simultaneous learners), sync DB calls block the event loop. Migrating to `asyncpg` + `AsyncSession` would let FastAPI handle more concurrent requests on the same hardware.
-
-4. **Connection pooling tuning** — Current config: `pool_size=5, max_overflow=10`. For production with HPA scaling to N pods, each pod opens up to 15 connections. At 10 pods = 150 connections → requires PgBouncer or RDS Proxy to multiplex.
-
-5. **Response streaming (SSE)** — The learner waits 1-3 seconds for the full AI response. Streaming via Server-Sent Events would show tokens as they arrive, improving perceived performance dramatically even though actual latency is the same.
-
-### What NOT to Optimize
-
-- **DB writes for every message** — At ~2ms per INSERT, this is not a bottleneck. The persistence is worth it for moderation, audit, and multi-turn context. Removing writes would save <5ms on a 500-3000ms request.
-- **Safety check performance** — Keyword matching runs in microseconds. Even the regex patterns (phone, email, address) are sub-millisecond. This is already as fast as it can be.
+1. **Eager-load conversation history** — The `messages` relationship uses lazy loading, triggering a separate `SELECT` when building AI context. `lazy="selectin"` batches this into the initial conversation query.
+2. **Cap history sent to AI** — A sliding window bounds the AI payload size and reduces token cost.
+3. **Async SQLAlchemy** — Under high concurrency, sync DB calls block the event loop. `asyncpg` + `AsyncSession` handles more concurrent requests on the same hardware.
+4. **Connection pooling** — Current config `pool_size=5, max_overflow=10`. At scale with multiple pods, PgBouncer or RDS Proxy is needed.
+5. **SSE streaming** — The learner waits 1–3 seconds for the full response. Streaming via Server-Sent Events improves perceived performance without changing actual latency.
 
 ---
 
-## What I Intentionally Did Not Build
+## What Was Intentionally Not Built
 
-| Feature | Reason omitted |
-|---------|---------------|
-| **Authentication / JWT** | Out of scope for the prototype; noted as top production priority |
-| **Rate limiting** | No framework for it in the MVP; would use slowapi or API Gateway |
-| **Streaming responses** | Would use Server-Sent Events (SSE); adds complexity without changing the core design |
-| **Alembic migrations** | Tables are created via `create_all()` at startup; Alembic is set up and ready but migrations weren't the focus |
-| **Frontend UI** | Assignment says "API-only is acceptable if README and demo instructions are clear" |
-| **Real-time notifications** | Teachers don't get push alerts for new flags; they poll the moderation endpoint |
+| Feature | Reason |
+|---------|--------|
+| Authentication / JWT | Out of scope for the prototype; top production priority |
+| Rate limiting | Would use `slowapi` or API Gateway; not needed for the demo |
+| Streaming responses | SSE adds backend and client complexity without changing the core design |
+| Alembic migrations | Tables created via `create_all()` at startup; Alembic is installed but not wired |
+| Frontend UI | Assignment states API-only is acceptable with clear demo instructions |
+| Real-time flag notifications | Teachers poll the moderation endpoint |
 
 ---
 
 ## Evolving to Production
 
 ### Compute
+
 | Now | Production |
 |-----|-----------|
-| `docker compose up` | EKS (Kubernetes) — I've managed 40+ clusters at GFT Group |
-| No scaling | HPA on API pods; Karpenter for node autoscaling (achieved 30% EC2 cost reduction) |
+| `docker compose up` | EKS (Kubernetes) |
+| No scaling | HPA on API pods; Karpenter for node autoscaling |
 
 ### Database
+
 | Now | Production |
 |-----|-----------|
-| Postgres in Docker | Amazon RDS PostgreSQL (Multi-AZ for HA) |
-| No connection pooling tuning | PgBouncer sidecar or RDS Proxy |
+| Postgres in Docker | Amazon RDS PostgreSQL (Multi-AZ) |
+| Default connection pool | PgBouncer sidecar or RDS Proxy |
 
 ### Secrets
+
 | Now | Production |
 |-----|-----------|
-| `.env` file | AWS Secrets Manager + External Secrets Operator (syncs to K8s Secrets) |
+| `.env` file | AWS Secrets Manager + External Secrets Operator |
 
 ### CI/CD
+
 | Now | Production |
 |-----|-----------|
 | GHA → Docker build | GHA → ECR push → ArgoCD sync → EKS rolling deploy |
 | No image promotion | Image promotion: dev → staging → prod with approval gate |
-| No rollback mechanism | ArgoCD one-click rollback to previous Git commit |
+| No rollback | ArgoCD rollback to previous Git commit |
 
 ### AI / Model Access
+
 | Now | Production |
 |-----|-----------|
-| Bedrock called over internet | Bedrock via VPC endpoint (no traffic leaves AWS network) |
-| Model hardcoded in env | Model config stored in AWS AppConfig (hot-reload without restart) |
+| Bedrock over public internet | Bedrock via VPC endpoint |
+| Model hardcoded in env | Model config in AWS AppConfig for hot-reload |
 
 ### Observability
+
 | Now | Production |
 |-----|-----------|
 | Python `logging` to stdout | Structured JSON logs → CloudWatch Logs |
-| No metrics | Prometheus metrics endpoint → Grafana dashboards |
-| No tracing | AWS X-Ray or OpenTelemetry for request tracing |
-| No alerting | CloudWatch Alarms → SNS → Slack (`#infra-alerts`) |
+| No metrics | Prometheus endpoint → Grafana |
+| No tracing | AWS X-Ray or OpenTelemetry |
+| No alerting | CloudWatch Alarms → SNS → Slack |
 
 ### Security
-| Enhancement | Why |
-|-------------|-----|
-| WAF in front of ALB | Blocks common web attacks and bot traffic |
-| JWT authentication | Each learner and teacher has an authenticated session |
-| Audit log table | Immutable record of all safety decisions for compliance |
+
+| Enhancement | Reason |
+|-------------|--------|
+| WAF in front of ALB | Block common web attacks and bot traffic |
+| JWT authentication | Verified learner and teacher sessions |
+| Audit log table | Immutable record of safety decisions for compliance |
 | Secrets rotation | Automatic rotation of DB credentials and API keys |
 
 ### Why Kubernetes (EKS) Over Simpler Alternatives
 
-| Option | Why Not |
-|--------|---------|
-| **AWS App Runner** | Great for simple stateless APIs, but no fine-grained networking control, no sidecar pattern (needed for PgBouncer, log shippers), limited egress control for Bedrock VPC endpoints |
-| **AWS ECS (Fargate)** | Lower ops burden than EKS, but weaker ecosystem — no ArgoCD-native GitOps, no Karpenter for smart node provisioning, harder to run operator-based tooling (External Secrets Operator, KEDA) |
-| **AWS Lambda** | Attractive for cost at low traffic, but cold starts add 500–2000ms to an AI response that is already slow. SQLAlchemy connection pooling also breaks under Lambda's ephemeral execution model |
-| **EKS (chosen)** | Full control over networking, scheduling, and sidecars. ArgoCD GitOps gives one-click rollback. Karpenter cuts node cost. Horizontal Pod Autoscaler handles traffic spikes. Proven at scale — I've run 40+ EKS clusters across production environments |
+| Option | Consideration |
+|--------|---------------|
+| **AWS App Runner** | Simple for stateless APIs, but no sidecar support (PgBouncer, log shippers), limited egress control for Bedrock VPC endpoints |
+| **AWS ECS (Fargate)** | Lower ops burden, but no ArgoCD-native GitOps, no Karpenter, harder to run operator-based tooling (External Secrets Operator, KEDA) |
+| **AWS Lambda** | Cold starts add 500–2000ms to an already-slow AI response; SQLAlchemy connection pooling doesn't fit the ephemeral execution model |
+| **EKS** | Full control over networking, scheduling, and sidecars; ArgoCD enables clean rollbacks; HPA handles traffic spikes |
 
-**Honest tradeoffs of choosing EKS:**
-- Higher operational complexity (control plane upgrades, node group management, IAM for service accounts)
-- Steeper learning curve for a small team with no prior K8s experience
-- Overkill for the prototype stage — ECS Fargate would be the right call until the team has 3+ engineers and stable traffic patterns
-
-**When I would switch from ECS to EKS:** when the team needs multi-tenant workload isolation, GPU nodes for fine-tuning safety models, or more than ~5 distinct services that need independent scaling policies.
-
+Tradeoffs of EKS: higher operational complexity (control plane upgrades, IAM for service accounts, node group management), and overkill for a small team in early stages. ECS Fargate is the more pragmatic starting point — the switch to EKS makes sense when multi-tenant isolation, GPU nodes for model fine-tuning, or complex multi-service scaling is needed.
