@@ -13,12 +13,17 @@ A REST API service built with Python (FastAPI) that supports child-safe AI-assis
 │                    CLIENT                                     │
 │          (Swagger UI / curl / future frontend)                │
 └──────────────────┬───────────────────────────────────────────┘
-                   │ HTTP REST
+                   │ HTTP REST  +  X-API-Key header
                    ▼
 ┌──────────────────────────────────────────────────────────────┐
 │              FastAPI Application (app/main.py)                │
 │                                                               │
-│  ┌─────────────────┐ ┌──────────────┐ ┌──────────────────┐  │
+│  ┌──────────────────────────────────────────────────────┐    │
+│  │  auth.py — verify_api_key() dependency               │    │
+│  │  Applied to all /api/* routers. /health is public.   │    │
+│  └──────────────────────────┬───────────────────────────┘    │
+│                             │ (401 if key missing/invalid)    │
+│  ┌─────────────────┐ ┌──────┴───────┐ ┌──────────────────┐  │
 │  │  Conversations  │ │   Messages   │ │   Moderation     │  │
 │  │  Router         │ │   Router     │ │   Router         │  │
 │  └────────┬────────┘ └──────┬───────┘ └────────┬─────────┘  │
@@ -139,7 +144,7 @@ flags
 
 | Feature | Reason omitted |
 |---------|---------------|
-| **Authentication / JWT** | Out of scope for the prototype; noted as top production priority |
+| **JWT / per-user auth** | API key auth is in place; per-learner JWT would require an IdP (Cognito/Auth0) — a full separate system |
 | **Rate limiting** | No framework for it in the MVP; would use slowapi or API Gateway |
 | **Streaming responses** | Would use Server-Sent Events (SSE); adds complexity without changing the core design |
 | **Alembic migrations** | Tables are created via `create_all()` at startup; Alembic is set up and ready but migrations weren't the focus |
@@ -192,15 +197,15 @@ flags
 | Enhancement | Why |
 |-------------|-----|
 | WAF in front of ALB | Blocks common web attacks and bot traffic |
-| JWT authentication | Each learner and teacher has an authenticated session |
+| JWT authentication | Replace shared API key with per-user tokens from AWS Cognito / Auth0; `learner_id` comes from the token claim |
 | Audit log table | Immutable record of all safety decisions for compliance |
-| Secrets rotation | Automatic rotation of DB credentials and API keys |
+| Secrets rotation | Automatic rotation of DB credentials and API keys via AWS Secrets Manager |
 
 ---
 
 ## What I Would Improve First (With One More Week)
 
-1. **JWT authentication** — learner_id should come from a verified token, not a free-form string
+1. **JWT authentication** — API key auth is in; next step is per-user JWTs so learner_id comes from a verified token claim, not a free-form string
 2. **Rate limiting** — prevent a single learner from flooding the system (10 messages/minute)
 3. **Alembic migrations wired up** — proper schema versioning instead of `create_all()`
 4. **Streaming AI responses** — SSE so the learner sees words appear as the AI generates them

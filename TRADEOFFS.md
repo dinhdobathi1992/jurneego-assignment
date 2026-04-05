@@ -6,7 +6,7 @@
 
 | Risk | Description | Impact |
 |------|-------------|--------|
-| **No authentication** | `learner_id` is a free string passed by any client. Anyone can impersonate any learner. | A malicious actor could read another learner's conversation history or inject messages. |
+| **Shared API key, not per-user auth** | All callers share the same `X-API-Key`. `learner_id` is still a free string — any valid key holder can read or write any conversation. | A malicious actor with a valid key could impersonate any learner. Mitigated for now (unauthenticated access is blocked); full fix requires JWT with per-user claims. |
 | **Keyword safety misses nuance** | A determined user can rephrase harmful requests to bypass keyword lists. | Safety failures in the highest-stakes scenario (child safety). |
 | **No rate limiting** | No limit on how many messages a learner can send per minute. | A single client could exhaust AI provider quotas or overwhelm the database. |
 | **AI provider single point of failure** | If Bedrock or LiteLLM is down, all conversations fail (returns fallback text only). | Poor user experience; no automatic failover to a secondary provider. |
@@ -39,10 +39,10 @@
 
 *Why I skipped it:* The schema was changing rapidly during development, and maintaining a chain of migration files while iterating would have slowed me down without adding value to the demo.
 
-**2. No JWT / session management**
-The API accepts `learner_id` as a plain string. Real authentication would require a login flow, token issuance, and validation on every request.
+**2. API key auth, not per-user JWT**
+The API requires an `X-API-Key` header — unauthenticated access is blocked. However, all callers share the same key; `learner_id` is still a plain string. Real per-user auth would require a login flow, JWT issuance, and token validation on every request.
 
-*Why I skipped it:* Authentication is a separate system (likely an external IdP like AWS Cognito or Auth0). Building a toy auth system would have taken a full day and would be thrown away anyway when integrated with a real IdP.
+*Why I stopped here:* Per-user JWT authentication is a separate system (AWS Cognito or Auth0). Building a toy auth system would be thrown away when integrated with a real IdP. The API key provides a meaningful security boundary for the demo and keeps the API from being publicly open.
 
 **3. No response streaming**
 The API returns the complete AI response in a single HTTP response. Production should use Server-Sent Events (SSE) or WebSockets so the learner sees words appear as the AI generates them.
@@ -61,7 +61,7 @@ The API returns the complete AI response in a single HTTP response. Production s
 If this moves forward, I'd tackle these in order:
 
 ### Week 1
-1. **JWT authentication via AWS Cognito** — integrate with Cognito user pools, validate JWT on every request, extract `learner_id` from token claims
+1. **JWT authentication via AWS Cognito** — API key auth is in; replace shared key with per-user JWTs from Cognito user pools, extract `learner_id` from token claims
 2. **Rate limiting** — add `slowapi` middleware, 10 messages/minute per learner, 100/minute per IP
 
 ### Week 2

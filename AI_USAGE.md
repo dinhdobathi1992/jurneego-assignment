@@ -46,7 +46,7 @@ app.add_middleware(
 
 **Problem:** `allow_origins=["*"]` with `allow_credentials=True` is a security misconfiguration. In production this would allow any website to make authenticated requests on behalf of the user. Browsers actually block this combination — but it shows the AI wasn't thinking about production security.
 
-**What I did:** Restricted origins to only known frontend URLs (`localhost:3000`, `localhost:5173`) and added a note that production should use the actual domain. In a real production deployment I would load the allowed origins from an environment variable.
+**What I did:** Restricted origins to only known frontend URLs (`localhost:3000`, `localhost:5173`) plus the production domain (`jurnee-ai.dinhdobathi.com`). In a larger deployment I would load the allowed origins from an environment variable rather than hardcoding them.
 
 ---
 
