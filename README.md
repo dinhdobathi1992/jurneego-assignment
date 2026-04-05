@@ -2,6 +2,8 @@
 
 A child-safe AI learning assistant service. Learners chat with an AI, every message is safety-checked, and flagged conversations are reviewable by teachers or admins.
 
+**Live demo:** https://jurnee-ai.dinhdobathi.com/docs
+
 ---
 
 ## ⚡ Quick Start (2 minutes)
@@ -113,40 +115,44 @@ make format
 
 ## 📡 API Endpoints
 
+The live API is at `https://jurnee-ai.dinhdobathi.com`. Replace that with `http://localhost:8000` for local dev.
+
 ### Core Flow
 
 ```bash
 # 1. Create a conversation for a learner
-curl -X POST http://localhost:8000/api/conversations \
+curl -X POST https://jurnee-ai.dinhdobathi.com/api/conversations \
   -H "Content-Type: application/json" \
-  -d '{"learner_id": "student-alice", "title": "Space exploration"}'
+  -d '{"learner_id": "student-alice", "title": "Math Help"}'
 
-# Response includes an "id" — use it below
-CONV_ID="<id from above>"
+# Response includes an "id" — capture it:
+CONV_ID="<id from response>"
 
-# 2. Send a safe message — get AI response
-curl -X POST http://localhost:8000/api/conversations/$CONV_ID/messages \
+# 2. Send a safe message — get a real AI response
+curl -X POST "https://jurnee-ai.dinhdobathi.com/api/conversations/$CONV_ID/messages" \
   -H "Content-Type: application/json" \
-  -d '{"content": "How do black holes form?"}'
+  -d '{"content": "Can you explain what a fraction is?"}'
+# → AI explains fractions in a child-friendly way, was_flagged: false
 
-# 3. Send an unsafe message — gets flagged + safe deflection returned
-curl -X POST http://localhost:8000/api/conversations/$CONV_ID/messages \
+# 3. Send an unsafe message — flagged, child-safe deflection returned (no AI call made)
+curl -X POST "https://jurnee-ai.dinhdobathi.com/api/conversations/$CONV_ID/messages" \
   -H "Content-Type: application/json" \
   -d '{"content": "I want to hurt myself"}'
-# → was_flagged: true, returns a child-friendly deflection message
+# → was_flagged: true, flag_reason: "Self-harm related content detected"
+#   returns a child-friendly deflection message instead of an AI response
 ```
 
 ### Moderation (Teacher / Admin)
 
 ```bash
 # List all flagged conversations
-curl http://localhost:8000/api/moderation/flagged
+curl https://jurnee-ai.dinhdobathi.com/api/moderation/flagged
 
 # Get full details of a flagged conversation (with flag reasons)
-curl http://localhost:8000/api/moderation/flagged/$CONV_ID
+curl "https://jurnee-ai.dinhdobathi.com/api/moderation/flagged/$CONV_ID"
 
 # Mark a flag as reviewed
-curl -X PATCH http://localhost:8000/api/moderation/flags/$FLAG_ID/review \
+curl -X PATCH "https://jurnee-ai.dinhdobathi.com/api/moderation/flags/$FLAG_ID/review" \
   -H "Content-Type: application/json" \
   -d '{"reviewer_notes": "Reviewed — student was upset, counselor notified."}'
 ```
@@ -155,10 +161,10 @@ curl -X PATCH http://localhost:8000/api/moderation/flags/$FLAG_ID/review \
 
 ```bash
 # Health check
-curl http://localhost:8000/health
+curl https://jurnee-ai.dinhdobathi.com/health
 
 # List all conversations (paginated)
-curl "http://localhost:8000/api/conversations?page=1&page_size=20"
+curl "https://jurnee-ai.dinhdobathi.com/api/conversations?page=1&page_size=20"
 ```
 
 ---
