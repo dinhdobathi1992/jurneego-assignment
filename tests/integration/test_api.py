@@ -23,6 +23,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
+from app.config import settings
 from app.database import Base, get_db
 from app.main import app
 
@@ -60,8 +61,9 @@ def setup_database():
 
 @pytest.fixture
 def client():
-    """FastAPI test client with API key pre-set."""
-    return TestClient(app, headers={"X-API-Key": "jurnee-demo-key-change-me"})
+    """FastAPI test client with API key pre-set from settings."""
+    key = settings.api_keys.split(",")[0].strip()
+    return TestClient(app, headers={"X-API-Key": key})
 
 
 # ---------- Health Check ----------
