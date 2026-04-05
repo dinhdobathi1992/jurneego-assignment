@@ -1,0 +1,42 @@
+# ============================================================
+# JurneeGo Safe AI Learning Assistant — CD Pipeline
+# ============================================================
+# Deploys to vm.dinhdobathi.com after CI passes on main.
+#
+# Required secret:
+#   DEPLOY_SSH_KEY — private SSH key for ubuntu@vm.dinhdobathi.com
+# ============================================================
+
+name: CD Pipeline
+
+on:
+  workflow_run:
+    workflows: ["CI Pipeline"]
+    types: [completed]
+    branches: [main]
+
+jobs:
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: vm.dinhdobathi.com
+          username: ubuntu
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            set -e
+            cd ~/jurneego-assignment
+            git pull origin main
+            docker compose -f docker-compose.prod.yml up -d --build
+            echo "--- Health check ---"
+            sleep 8
+            curl -sf http://localhost:8080/health || (docker logs jurnee-api --tail 30 && exit 1)
+            echo "Deploy complete."
