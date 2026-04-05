@@ -76,6 +76,8 @@ app.add_middleware(
         "http://vm.dinhdobathi.com",
         "https://vm.dinhdobathi.com",
         "http://vm.dinhdobathi.com:8000",
+        "http://jurnee-ai.dinhdobathi.com",
+        "https://jurnee-ai.dinhdobathi.com",
     ],
     allow_credentials=True,
     allow_methods=["*"],
