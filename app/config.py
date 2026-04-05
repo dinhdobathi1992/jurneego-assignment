@@ -5,7 +5,6 @@ Uses pydantic-settings so every config value is validated at startup.
 If a required env var is missing, the app fails fast with a clear error.
 """
 
-from pydantic import field_validator
 from pydantic_settings import BaseSettings
 
 
@@ -34,14 +33,7 @@ class Settings(BaseSettings):
 
     # ---------- Authentication ----------
     # Comma-separated list of valid API keys, e.g. "key1,key2"
-    api_keys: list[str] = ["jurnee-demo-key-change-me"]
-
-    @field_validator("api_keys", mode="before")
-    @classmethod
-    def parse_api_keys(cls, v: object) -> list[str]:
-        if isinstance(v, str):
-            return [k.strip() for k in v.split(",") if k.strip()]
-        return v  # type: ignore[return-value]
+    api_keys: str = "jurnee-demo-key-change-me"
 
     # ---------- Safety ----------
     safety_enabled: bool = True

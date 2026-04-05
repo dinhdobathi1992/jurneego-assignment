@@ -16,6 +16,7 @@ _api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
 
 
 def verify_api_key(api_key: str = Security(_api_key_header)) -> str:
-    if api_key and api_key in settings.api_keys:
+    valid = {k.strip() for k in settings.api_keys.split(",") if k.strip()}
+    if api_key and api_key in valid:
         return api_key
     raise HTTPException(status_code=401, detail="Invalid or missing API key")
