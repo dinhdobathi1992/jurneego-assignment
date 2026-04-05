@@ -1,0 +1,15 @@
+# ============================================================
+# JurneeGo — Production Compose (Neon DB, external LiteLLM)
+# ============================================================
+# Usage on server:
+#   docker compose -f docker-compose.prod.yml up -d --build
+# ============================================================
+
+services:
+  api:
+    build: .
+    container_name: jurnee-api
+    ports:
+      - "8000:8000"
+    env_file: .env
+    restart: unless-stopped
