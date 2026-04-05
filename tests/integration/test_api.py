@@ -60,8 +60,8 @@ def setup_database():
 
 @pytest.fixture
 def client():
-    """FastAPI test client."""
-    return TestClient(app)
+    """FastAPI test client with API key pre-set."""
+    return TestClient(app, headers={"X-API-Key": "jurnee-demo-key-change-me"})
 
 
 # ---------- Health Check ----------

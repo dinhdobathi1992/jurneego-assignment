@@ -9,12 +9,13 @@ Swagger docs: http://localhost:8000/docs
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.conversations import router as conversations_router
 from app.api.messages import router as messages_router
 from app.api.moderation import router as moderation_router
+from app.auth import verify_api_key
 from app.config import settings
 from app.database import Base, get_engine
 
@@ -84,10 +85,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Register API routers
-app.include_router(conversations_router)
-app.include_router(messages_router)
-app.include_router(moderation_router)
+# Register API routers — all /api/* routes require a valid X-API-Key header
+_auth = [Depends(verify_api_key)]
+app.include_router(conversations_router, dependencies=_auth)
+app.include_router(messages_router, dependencies=_auth)
+app.include_router(moderation_router, dependencies=_auth)
 
 
 # ---------- Health Check ----------
