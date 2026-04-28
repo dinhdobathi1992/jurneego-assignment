@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bubbli — Parent Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            jakarta: ['"Plus Jakarta Sans"', 'sans-serif'],
+            inter:   ['Inter', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    h1, h2, h3, button { font-family: 'Plus Jakarta Sans', sans-serif; }
+
+    #children-list {
+      scrollbar-width: thin;
+      scrollbar-color: #DAF0EE transparent;
+    }
+    #parent-conv-list {
+      scrollbar-width: thin;
+      scrollbar-color: #DAF0EE transparent;
+    }
+    #parent-thread {
+      scrollbar-width: thin;
+      scrollbar-color: #DAF0EE transparent;
+    }
+    #sessions-container {
+      scrollbar-width: thin;
+      scrollbar-color: #DAF0EE transparent;
+    }
+    #safety-container {
+      scrollbar-width: thin;
+      scrollbar-color: #DAF0EE transparent;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; }
+    }
+  </style>
+</head>
+<body class="h-screen bg-[#FFFDF5] flex flex-col overflow-hidden">
+
+  <!-- ===== Header ===== -->
+  <header class="bg-[#0A3D3C] px-4 md:px-6 py-3 flex items-center justify-between flex-shrink-0 shadow-md">
+    <!-- Logo -->
+    <div class="flex items-center gap-3">
+      <img src="./assets/logo.png" alt="Bubbli" class="h-8 object-contain rounded-lg" />
+    </div>
+
+    <!-- Right side: role badge + user info + sign out -->
+    <div class="flex items-center gap-3">
+      <!-- Role badge — violet for parent -->
+      <span class="hidden sm:inline-flex items-center bg-[#EDE9FE] text-[#7C3AED] text-[11px] font-jakarta font-semibold px-2.5 py-0.5 rounded-full select-none">
+        Parent
+      </span>
+
+      <!-- Avatar + name -->
+      <div class="hidden md:flex items-center gap-2">
+        <div class="w-7 h-7 rounded-full bg-[#EE6742] flex items-center justify-center text-white text-xs font-bold font-jakarta select-none">
+          <span id="user-avatar">P</span>
+        </div>
+        <span id="user-name" class="text-[#DAF0EE] text-sm font-medium font-inter"></span>
+      </div>
+
+      <!-- Sign out -->
+      <button id="logout-btn"
+              class="text-[#DAF0EE] hover:text-white text-xs border border-[#DAF0EE]/40 hover:border-[#DAF0EE] rounded-full px-3 py-1.5 cursor-pointer transition-colors duration-150">
+        Sign out
+      </button>
+    </div>
+  </header>
+
+  <!-- ===== Main layout: flex row, fills remaining height ===== -->
+  <div class="flex flex-1 overflow-hidden">
+
+    <!-- ── Left aside: children list ── -->
+    <aside class="w-72 bg-white border-r border-[#DAF0EE] flex flex-col flex-shrink-0">
+      <div class="px-4 pt-4 pb-2 border-b border-[#DAF0EE]">
+        <p class="text-[10px] text-gray-400 uppercase tracking-widest font-semibold font-jakarta select-none">
+          My Children
+        </p>
+      </div>
+      <div id="children-list" class="flex-1 overflow-y-auto py-2 px-2 space-y-0.5">
+        <!-- Populated by parent.js -->
+      </div>
+    </aside>
+
+    <!-- ── Right main: tabs + tab views ── -->
+    <main class="flex-1 flex flex-col overflow-hidden">
+
+      <!-- Tab bar -->
+      <nav class="bg-white border-b border-[#DAF0EE] flex-shrink-0 px-4 md:px-6 flex items-center">
+        <!-- Conversations tab (starts active) -->
+        <button
+          id="tab-conversations"
+          class="relative flex items-center gap-1.5 px-4 py-3 text-sm cursor-pointer transition-colors duration-150 border-b-2 border-[#0A3D3C] text-[#0A3D3C] font-semibold">
+          Conversations
+        </button>
+
+        <!-- Sessions tab (starts inactive) -->
+        <button
+          id="tab-sessions"
+          class="relative flex items-center gap-1.5 px-4 py-3 text-sm cursor-pointer transition-colors duration-150 border-b-2 border-transparent text-gray-500 hover:text-gray-700">
+          Sessions
+        </button>
+
+        <!-- Safety tab -->
+        <button
+          id="tab-safety"
+          class="relative flex items-center gap-1.5 px-4 py-3 text-sm cursor-pointer transition-colors duration-150 border-b-2 border-transparent text-gray-500 hover:text-gray-700">
+          Safety
+          <!-- Safety badge: hidden red pill for count -->
+          <span id="safety-badge"
+                class="hidden min-w-[18px] h-[18px] bg-[#EE6742] text-white text-[10px] font-bold font-jakarta rounded-full flex items-center justify-center px-1">
+            0
+          </span>
+        </button>
+
+        <!-- Far right: selected child pill -->
+        <div class="ml-auto">
+          <span id="selected-child-pill" class="hidden items-center gap-1.5 bg-[#EDE9FE] text-[#7C3AED] text-xs font-jakarta font-semibold px-3 py-1.5 rounded-full select-none">
+            <div id="child-pill-avatar" class="w-4 h-4 rounded-full bg-[#7C3AED] flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0"></div>
+            <span id="selected-child-name"></span>
+          </span>
+        </div>
+      </nav>
+
+      <!-- ════ Tab view: Conversations ════ -->
+      <div id="view-conversations" class="flex flex-1 overflow-hidden">
+
+        <!-- Left column: conversation list -->
+        <div class="w-64 border-r border-[#DAF0EE] flex flex-col flex-shrink-0 bg-white">
+          <div id="parent-conv-list" class="flex-1 overflow-y-auto py-2 px-2 space-y-0.5">
+            <!-- Populated by parent.js -->
+          </div>
+        </div>
+
+        <!-- Right column: thread or empty state -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+
+          <!-- Empty state -->
+          <div id="parent-empty" class="flex-1 flex flex-col items-center justify-center text-center px-8 select-none">
+            <div class="w-16 h-16 bg-[#EDE9FE] rounded-2xl flex items-center justify-center mb-4">
+              <!-- Graduation cap icon -->
+              <svg class="w-8 h-8 text-[#7C3AED]" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 3.741-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-7.007 11.55A5.981 5.981 0 0 0 6.75 15.75v-1.5" />
+              </svg>
+            </div>
+            <p class="text-[#0A3D3C] font-jakarta font-semibold text-base">Select a conversation</p>
+            <p class="text-gray-400 text-sm mt-1.5 max-w-xs">
+              Choose a child from the sidebar, then pick a conversation to view the thread.
+            </p>
+          </div>
+
+          <!-- Thread wrapper (hidden until a conversation is selected) -->
+          <div id="parent-thread-wrapper" class="hidden flex-1 flex flex-col overflow-hidden">
+
+            <!-- Thread header bar -->
+            <div class="flex-shrink-0 bg-white border-b border-[#DAF0EE] px-4 py-3 flex items-center gap-3">
+              <p id="thread-title" class="text-sm font-jakarta font-semibold text-[#0A3D3C] truncate flex-1"></p>
+              <!-- Flagged badge (hidden by default) -->
+              <span id="thread-flagged-badge"
+                    class="hidden items-center gap-1 bg-[#FEF2F2] text-[#EE6742] text-xs font-jakarta font-semibold px-2.5 py-1 rounded-full flex-shrink-0">
+                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495ZM10 5a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 10 5Zm0 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clip-rule="evenodd"/>
+                </svg>
+                Flagged
+              </span>
+            </div>
+
+            <!-- Scrollable message area -->
+            <div id="parent-thread" class="flex-1 overflow-y-auto py-6 px-4 space-y-1">
+              <!-- Populated by parent.js -->
+            </div>
+
+          </div>
+          <!-- end thread wrapper -->
+
+        </div>
+        <!-- end right column -->
+
+      </div>
+      <!-- ════ end Conversations view ════ -->
+
+      <!-- ════ Tab view: Sessions ════ -->
+      <div id="view-sessions" class="hidden flex-1 overflow-y-auto p-6">
+        <div id="sessions-container">
+          <!-- Populated by parent.js -->
+          <p class="text-sm text-gray-400">Loading sessions…</p>
+        </div>
+      </div>
+      <!-- ════ end Sessions view ════ -->
+
+      <!-- ════ Tab view: Safety ════ -->
+      <div id="view-safety" class="hidden flex-1 overflow-y-auto p-6">
+        <div id="safety-container">
+          <!-- Populated by parent.js -->
+          <p class="text-sm text-gray-400">Loading safety data…</p>
+        </div>
+      </div>
+      <!-- ════ end Safety view ════ -->
+
+    </main>
+    <!-- end right main -->
+
+  </div>
+  <!-- end main layout -->
+
+  <!-- ===== Privacy Modal ===== -->
+  <div id="privacy-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+    <!-- Backdrop — no onclick dismiss, user must choose -->
+    <div class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
+
+    <!-- Card -->
+    <div class="relative bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 z-10">
+
+      <!-- Icon -->
+      <div class="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center mb-4">
+        <svg class="w-6 h-6 text-amber-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+        </svg>
+      </div>
+
+      <h3 class="font-jakarta font-bold text-[#0A3D3C] text-base mb-2">Privacy reminder</h3>
+      <p class="text-sm text-gray-600 leading-relaxed mb-5">
+        You're about to view your child's conversation with Bubbli. This is private content — please use it for guidance and support only. Do not share or publish these messages, as that would violate your child's privacy.
+      </p>
+
+      <div class="flex gap-3">
+        <button onclick="window._closePrivacyModal()"
+                class="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-500 hover:bg-gray-50 cursor-pointer transition-colors duration-150">
+          Cancel
+        </button>
+        <button id="privacy-confirm-btn"
+                class="flex-1 px-4 py-2.5 rounded-xl bg-[#0A3D3C] text-white text-sm font-semibold font-jakarta hover:bg-[#072e2d] cursor-pointer transition-colors duration-150">
+          I understand, view conversation
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Translate Modal ===== -->
+  <div id="translate-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+    <!-- Backdrop — click to dismiss -->
+    <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="window._closeTranslateModal()"></div>
+
+    <!-- Card -->
+    <div class="relative bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 z-10">
+
+      <h3 class="font-jakarta font-bold text-[#0A3D3C] text-base mb-4">Translate message</h3>
+
+      <!-- Language selector -->
+      <div class="mb-4">
+        <label class="block text-xs font-semibold text-gray-500 mb-1.5">Translate to</label>
+        <select id="translate-lang"
+                class="w-full bg-[#FFFDF5] border border-[#DAF0EE] rounded-xl px-3 py-2.5 text-sm font-inter text-[#0A3D3C] focus:outline-none focus:ring-2 focus:ring-[#0A3D3C]/30 cursor-pointer appearance-none">
+          <option value="vi">Vietnamese</option>
+          <option value="zh">Chinese Simplified</option>
+          <option value="es">Spanish</option>
+          <option value="fr">French</option>
+          <option value="ar">Arabic</option>
+          <option value="ko">Korean</option>
+          <option value="ja">Japanese</option>
+          <option value="th">Thai</option>
+          <option value="pt">Portuguese</option>
+          <option value="de">German</option>
+        </select>
+      </div>
+
+      <!-- Translation result (hidden until translated) -->
+      <div id="translate-result" class="hidden bg-[#F2FBF9] rounded-xl p-3 mb-4">
+        <p class="text-sm font-inter text-[#0A3D3C] leading-relaxed"></p>
+      </div>
+
+      <div class="flex gap-3">
+        <button onclick="window._closeTranslateModal()"
+                class="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-500 hover:bg-gray-50 cursor-pointer transition-colors duration-150">
+          Close
+        </button>
+        <button id="translate-btn"
+                class="flex-1 px-4 py-2.5 rounded-xl bg-[#0A3D3C] text-white text-sm font-semibold font-jakarta hover:bg-[#072e2d] cursor-pointer transition-colors duration-150">
+          Translate
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { init } from './js/parent.js';
+    init();
+  </script>
+
+</body>
+</html>
