@@ -3,14 +3,22 @@ import { api } from './api.js';
 import { clearTokens } from './auth.js';
 
 const displayName = sessionStorage.getItem('display_name') ?? 'Learner';
-const userEmail = sessionStorage.getItem('user_email') ?? '';
 let activeConversationId = null;
 let streamCtrl = null;
+
+function emailFromToken() {
+  try {
+    const t = sessionStorage.getItem('app_token');
+    if (!t) return '';
+    return JSON.parse(atob(t.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')))?.email ?? '';
+  } catch { return ''; }
+}
 
 export async function init() {
   document.getElementById('user-name').textContent = displayName;
   const emailEl = document.getElementById('user-email');
-  if (emailEl && userEmail) emailEl.textContent = userEmail;
+  const email = sessionStorage.getItem('user_email') || emailFromToken();
+  if (emailEl && email) emailEl.textContent = email;
 
   document.getElementById('logout-btn').addEventListener('click', () => {
     clearTokens();

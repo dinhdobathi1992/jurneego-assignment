@@ -16,8 +16,13 @@ export async function init() {
   const avatar = document.getElementById('user-avatar');
   if (avatar && displayName) avatar.textContent = displayName[0].toUpperCase();
   const emailEl = document.getElementById('user-email');
-  const userEmail = sessionStorage.getItem('user_email') ?? '';
-  if (emailEl && userEmail) emailEl.textContent = userEmail;
+  const email = sessionStorage.getItem('user_email') || (() => {
+    try {
+      const t = sessionStorage.getItem('app_token');
+      return t ? JSON.parse(atob(t.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')))?.email ?? '' : '';
+    } catch { return ''; }
+  })();
+  if (emailEl && email) emailEl.textContent = email;
 
   document.getElementById('logout-btn').addEventListener('click', () => {
     clearTokens();
