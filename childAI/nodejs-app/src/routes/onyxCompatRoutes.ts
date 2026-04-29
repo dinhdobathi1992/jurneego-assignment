@@ -91,4 +91,77 @@ export const onyxCompatRoutes: FastifyPluginAsync = async (fastify) => {
     custom_nav_items: [],
     enable_consent_screen: false,
   }));
+
+  // ── Persona / agents ──────────────────────────────────────────────────────
+  fastify.get('/api/persona', async () => ([
+    {
+      id: 0,
+      name: 'Bubbli',
+      description: 'Child-safe AI assistant',
+      is_default_persona: true,
+      display_priority: 0,
+      starter_messages: [
+        { name: 'Help with math', message: 'Help me with my math homework. Can you explain how to add fractions?' },
+        { name: 'Tell me a story', message: 'Tell me a fun adventure story about a brave little dragon.' },
+        { name: 'Explain something', message: 'Why is the sky blue? Explain it in a fun way.' },
+        { name: 'Be creative', message: 'Write a short rhyming poem about a curious little cat.' },
+      ],
+      tools: [],
+      document_sets: [],
+      icon_color: '#0A3D3C',
+      icon_shape: 1,
+      is_visible: true,
+      is_public: true,
+      builtin_persona: false,
+      labels: [],
+      owner: null,
+      groups: [],
+      users: [],
+      llm_model_provider_override: null,
+      llm_model_version_override: null,
+      num_chunks: null,
+      llm_relevance_filter: false,
+      llm_filter_extraction: false,
+      recency_bias: 'auto',
+      prompts: [],
+    },
+  ]));
+
+  fastify.get('/api/persona/labels', async () => ([]));
+
+  // ── LLM providers ─────────────────────────────────────────────────────────
+  fastify.get('/api/llm/provider', async () => ([
+    {
+      id: 0,
+      name: 'default',
+      provider: 'openai',
+      api_key_set: true,
+      default_model_name: 'gpt-4o-mini',
+      fast_default_model_name: null,
+      model_names: ['gpt-4o-mini'],
+      display_model_names: ['gpt-4o-mini'],
+      is_default_provider: true,
+      is_public: true,
+      groups: [],
+      custom_config: {},
+    },
+  ]));
+
+  // ── Projects ──────────────────────────────────────────────────────────────
+  fastify.get('/api/user/projects', async () => ([]));
+
+  // ── Notifications ─────────────────────────────────────────────────────────
+  fastify.get('/api/notifications', async () => ({ notifications: [] }));
+
+  // ── Assistant preferences ─────────────────────────────────────────────────
+  fastify.get('/api/user/assistant/preferences', async () => ({
+    chosen_assistants: null,
+    hidden_assistants: [],
+    visible_assistants: [],
+  }));
+
+  // ── Connectors / document sets (empty for chat-only mode) ────────────────
+  fastify.get('/api/manage/connector', async () => ([]));
+  fastify.get('/api/manage/document-set', async () => ([]));
+  fastify.get('/api/federated', async () => ([]));
 };

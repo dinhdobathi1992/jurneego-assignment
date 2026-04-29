@@ -56,3 +56,55 @@ describe('onyxCompatRoutes — auth bootstrap', () => {
     expect(body.application_status).toBe('active');
   });
 });
+
+describe('onyxCompatRoutes — feature stubs', () => {
+  it('GET /api/persona returns one default Bubbli persona', async () => {
+    const res = await app.inject({ method: 'GET', url: '/api/persona' });
+    expect(res.statusCode).toBe(200);
+    const list = res.json();
+    expect(Array.isArray(list)).toBe(true);
+    expect(list).toHaveLength(1);
+    expect(list[0].id).toBe(0);
+    expect(list[0].name).toBe('Bubbli');
+    expect(list[0].is_default_persona).toBe(true);
+  });
+
+  it('GET /api/persona/labels returns empty array', async () => {
+    const res = await app.inject({ method: 'GET', url: '/api/persona/labels' });
+    expect(res.json()).toEqual([]);
+  });
+
+  it('GET /api/llm/provider returns one default provider', async () => {
+    const res = await app.inject({ method: 'GET', url: '/api/llm/provider' });
+    const list = res.json();
+    expect(list).toHaveLength(1);
+    expect(list[0].is_default_provider).toBe(true);
+    expect(list[0].model_names.length).toBeGreaterThan(0);
+  });
+
+  it('GET /api/user/projects returns empty array', async () => {
+    const res = await app.inject({ method: 'GET', url: '/api/user/projects' });
+    expect(res.json()).toEqual([]);
+  });
+
+  it('GET /api/notifications returns empty list shape', async () => {
+    const res = await app.inject({ method: 'GET', url: '/api/notifications' });
+    const body = res.json();
+    expect(body).toEqual({ notifications: [] });
+  });
+
+  it('GET /api/user/assistant/preferences returns empty preferences', async () => {
+    const res = await app.inject({ method: 'GET', url: '/api/user/assistant/preferences' });
+    expect(res.json()).toEqual({ chosen_assistants: null, hidden_assistants: [], visible_assistants: [] });
+  });
+
+  it('GET /api/manage/connector returns empty array', async () => {
+    const res = await app.inject({ method: 'GET', url: '/api/manage/connector' });
+    expect(res.json()).toEqual([]);
+  });
+
+  it('GET /api/manage/document-set returns empty array', async () => {
+    const res = await app.inject({ method: 'GET', url: '/api/manage/document-set' });
+    expect(res.json()).toEqual([]);
+  });
+});
