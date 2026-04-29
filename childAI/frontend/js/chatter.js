@@ -254,7 +254,13 @@ function renderMessages(messages) {
       </div>`;
     return;
   }
-  container.innerHTML = messages.map(msgHTML).join('');
+  // Find the latest assistant message index so we can tag it for the regenerate button.
+  let lastAiIdx = -1;
+  for (let i = messages.length - 1; i >= 0; i--) {
+    if (messages[i].role === 'assistant') { lastAiIdx = i; break; }
+  }
+  const enriched = messages.map((m, i) => i === lastAiIdx ? { ...m, is_latest: true } : m);
+  container.innerHTML = enriched.map(msgHTML).join('');
   scrollToBottom();
 }
 
@@ -339,6 +345,84 @@ window._toggleFeedback = async function(btn, messageId, score) {
   }
 };
 
+window._regenerate = function() {
+  if (!activeConversationId || streamCtrl !== null) return;
+
+  document.getElementById('send-btn').disabled = true;
+  document.getElementById('send-btn').classList.add('hidden');
+  document.getElementById('stop-btn').classList.remove('hidden');
+
+  // Remove the latest AI bubble — the server will mark its message as regenerated.
+  const container = document.getElementById('messages');
+  const aiGroups = container.querySelectorAll('.ai-msg-group');
+  if (aiGroups.length) aiGroups[aiGroups.length - 1].remove();
+
+  // Insert a fresh streaming placeholder bubble matching sendMessage()'s pattern.
+  const streamId = 'stream-' + Date.now();
+  container.insertAdjacentHTML('beforeend', `
+    <div class="ai-msg-group flex gap-3 mb-7" id="${streamId}">
+      <div class="flex-shrink-0 w-8 h-8 rounded-full bg-[#DAF0EE] flex items-center justify-center mt-0.5 shadow-sm">
+        <svg class="w-4 h-4 text-[#0A3D3C]" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 0 1-2.555-.337A5.972 5.972 0 0 1 5.41 20.97a5.969 5.969 0 0 1-.474-.065 4.48 4.48 0 0 0 .978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25Z" />
+        </svg>
+      </div>
+      <div class="flex-1 min-w-0">
+        <p class="text-[11px] font-semibold font-jakarta text-[#0A3D3C] mb-1.5">Bubbli</p>
+        <div class="bg-white border border-[#DAF0EE] rounded-2xl rounded-tl-sm px-5 py-4 shadow-sm">
+          <span id="${streamId}-dots" class="inline-flex gap-1.5 items-center py-1">
+            <span class="dot w-2 h-2 rounded-full bg-[#0A3D3C]/40"></span>
+            <span class="dot w-2 h-2 rounded-full bg-[#0A3D3C]/40"></span>
+            <span class="dot w-2 h-2 rounded-full bg-[#0A3D3C]/40"></span>
+          </span>
+          <div id="${streamId}-text" class="ai-content text-[15px] font-inter text-[#1F2937] leading-relaxed hidden"></div>
+        </div>
+      </div>
+    </div>`);
+  scrollToBottom();
+
+  let accumulated = '';
+  let started = false;
+
+  streamCtrl = api.stream(
+    `/api/conversations/${activeConversationId}/regenerate`,
+    {},
+    {
+      'assistant.chunk': ({ content: chunk }) => {
+        accumulated += chunk;
+        if (!started) {
+          started = true;
+          document.getElementById(`${streamId}-dots`)?.remove();
+          const t = document.getElementById(`${streamId}-text`);
+          if (t) t.classList.remove('hidden');
+        }
+        const t = document.getElementById(`${streamId}-text`);
+        if (t) t.textContent = accumulated;
+        scrollToBottom();
+      },
+      'assistant.completed': ({ content: full }) => { if (full) accumulated = full; },
+      done: () => {
+        document.getElementById(`${streamId}-dots`)?.remove();
+        document.getElementById('send-btn')?.removeAttribute('disabled');
+        document.getElementById('send-btn')?.classList.remove('hidden');
+        document.getElementById('stop-btn')?.classList.add('hidden');
+        streamCtrl = null;
+        reloadMessages(streamId, accumulated);
+        loadConversations();
+        pollForTitle(activeConversationId);
+      },
+      error: (err) => {
+        console.error('[chatter] regenerate stream error:', err);
+        document.getElementById(`${streamId}-dots`)?.remove();
+        document.getElementById('send-btn')?.removeAttribute('disabled');
+        document.getElementById('send-btn')?.classList.remove('hidden');
+        document.getElementById('stop-btn')?.classList.add('hidden');
+        streamCtrl = null;
+        reloadMessages(streamId, accumulated);
+      },
+    }
+  );
+};
+
 function aiMsgHTML(m) {
   const safe = m.is_safe !== false;
   const ts = formatMsgTime(m.created_at);
@@ -381,6 +465,13 @@ function aiMsgHTML(m) {
                 <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 15h2.25m8.024-9.75c.011.05.028.1.052.148.591 1.2.924 2.55.924 3.977a8.96 8.96 0 0 1-.999 4.125m.023-8.25c-.076-.365.183-.75.575-.75h.908c.889 0 1.713.518 1.972 1.368.339 1.11.521 2.287.521 3.507 0 1.553-.295 3.036-.831 4.398-.306.774-1.086 1.227-1.918 1.227h-1.053c-.472 0-.745-.556-.5-.96a8.95 8.95 0 0 0 .303-.54m.023-8.25H16.48a4.5 4.5 0 0 1 1.423.23l3.114 1.04a4.5 4.5 0 0 0 1.423.23h1.294M14.25 9h-3.027c-.808 0-1.535.446-2.033 1.08a9.039 9.039 0 0 1-2.861 2.4c-.723.384-1.35.956-1.653 1.715a4.499 4.499 0 0 0-.322 1.672v.633a2.25 2.25 0 0 0 2.25 2.25.75.75 0 0 0 .75-.75v-.182c0-.866.385-1.65 1.03-2.193 1.617-1.359 2.667-3.16 2.844-5.124M14.25 9V5.25c0-1.5-.75-2.25-2.25-2.25l-1.5 4.5L9 9h5.25Z" />
               </svg>
             </button>` : ''}
+          ${m.is_latest ? `
+          <button onclick="window._regenerate()" title="Regenerate" aria-label="Regenerate response"
+                  class="text-gray-400 hover:text-[#0A3D3C] hover:bg-[#DAF0EE] p-1.5 rounded-lg cursor-pointer transition-colors">
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
+            </svg>
+          </button>` : ''}
           <button onclick="window._copyMsg(this)" data-content="${escAttr(m.content ?? '')}"
                   class="text-gray-400 hover:text-[#0A3D3C] p-1.5 rounded-lg hover:bg-[#DAF0EE] cursor-pointer transition-colors" title="Copy">
             <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
