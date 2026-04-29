@@ -109,6 +109,51 @@ Fill these in during Task 13's smoke test.
 - Does the additional complexity of running a Next.js front-end (build tooling, deploy pipeline, two services to host) justify the visual/feature delta?
 - Is Onyx's date-grouped sidebar materially better than our custom version (which also groups by date now)?
 
+## Smoke-test status
+
+Backend smoke test, run 2026-04-29 after all 13 tasks:
+
+```
+──────── Direct Fastify (8001) — public endpoints ────────
+  200  /api/health, /api/auth/type, /api/me, /api/settings,
+        /api/enterprise-settings, /api/persona, /api/llm/provider,
+        /api/notifications, /api/version
+
+──────── Auth-gated (no token, expect 401) ────────
+  401  GET /api/chat/get-user-chat-sessions
+  401  POST /api/chat/create-chat-session
+  401  POST /api/chat/send-chat-message
+
+──────── Through Onyx proxy (3002 → 8001) ────────
+  200  /api/health, /api/auth/type, /api/me, /api/persona, /api/llm/provider
+
+──────── Onyx UI ────────
+  200  GET /
+```
+
+Unit tests: 24 vitest assertions across `onyxCompatRoutes.test.ts` and
+`onyxStreamAdapter.test.ts`, all passing. (43 across all unit tests in the project.)
+
+Browser walk-through is the next step — the wire surface is verified, the
+visual A/B is for a human to do.
+
+## Browser walk-through (manual)
+
+1. Confirm both servers running:
+   ```bash
+   ps aux | grep -E 'tsx watch|next dev' | grep -v grep
+   ```
+   Expect a Fastify (`tsx watch src/server.ts`) and a Next.js (`next dev -p 3002`).
+2. Sign in to the existing custom UI at `localhost:3001/frontend/index.html`
+   (or wherever the python http.server is serving it).
+3. Open `dashboard-chatter.html`, send a message, verify it streams.
+4. Click **"Try Onyx UI (beta)"** in the sidebar.
+5. Should land on `localhost:3002/app` authenticated as the same user.
+6. Verify the Onyx sidebar shows your previous conversations.
+7. Open one, verify the messages render in order.
+8. Send a new message in Onyx, verify streaming works.
+9. Capture screenshots side-by-side.
+
 ## Capture screenshots here
 
 Save side-by-side screenshots of identical chats to
