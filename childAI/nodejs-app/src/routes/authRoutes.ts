@@ -80,16 +80,20 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
           role = mappedRole ?? existing.rows[0].primary_role;
           // Only overwrite display_name if Google returned a real non-empty value
           await db.query(
-            `UPDATE users SET display_name = COALESCE(NULLIF($1, 'User'), display_name), primary_role = $2 WHERE external_subject = $3`,
-            [displayName, role, externalSubject]
+            `UPDATE users SET
+              display_name = COALESCE(NULLIF($1, 'User'), display_name),
+              email = COALESCE(email, NULLIF($2, '')),
+              primary_role = $3
+             WHERE external_subject = $4`,
+            [displayName, email || null, role, externalSubject]
           );
         } else {
           role = mappedRole ?? 'learner';
           const inserted = await db.query(
-            `INSERT INTO users (external_subject, primary_role, display_name, preferred_language)
-             VALUES ($1, $2, $3, 'en')
+            `INSERT INTO users (external_subject, primary_role, display_name, email, preferred_language)
+             VALUES ($1, $2, $3, $4, 'en')
              RETURNING id, primary_role`,
-            [externalSubject, role, displayName]
+            [externalSubject, role, displayName, email || null]
           );
           role = inserted.rows[0].primary_role;
         }
