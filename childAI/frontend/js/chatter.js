@@ -582,6 +582,7 @@ async function sendMessage(inputId) {
       },
       'assistant.completed': ({ content: full }) => { if (full) accumulated = full; },
       done: () => {
+        streamCtrl = null;
         document.getElementById(`${streamId}-dots`)?.remove();
         document.getElementById('send-btn')?.removeAttribute('disabled');
         document.getElementById('send-btn')?.classList.remove('hidden');
@@ -594,6 +595,7 @@ async function sendMessage(inputId) {
         pollForTitle(activeConversationId);
       },
       error: (err) => {
+        streamCtrl = null;
         console.error('[chatter] stream error:', err);
         document.getElementById(`${streamId}-dots`)?.remove();
         document.getElementById('send-btn')?.removeAttribute('disabled');

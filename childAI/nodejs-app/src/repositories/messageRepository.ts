@@ -74,6 +74,7 @@ export async function listMessages(
     .selectAll()
     .where('conversation_id', '=', conversationId)
     .where('status', '!=', 'cancelled')
+    .where('status', '!=', 'regenerated')
     .orderBy('created_at', 'asc')
     .limit(limit)
     .execute();
