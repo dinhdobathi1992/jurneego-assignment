@@ -115,6 +115,8 @@ export interface MessagesTable {
   metadata: string; // JSONB
   created_at: ColumnType<Date, string | undefined, never>;
   completed_at: ColumnType<Date | null, string | null | undefined, string | null>;
+  feedback_score: ColumnType<-1 | 1 | null, -1 | 1 | null | undefined, -1 | 1 | null>;
+  feedback_at: ColumnType<Date | null, string | null | undefined, string | null>;
 }
 
 export interface GuidanceNotesTable {
