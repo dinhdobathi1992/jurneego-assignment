@@ -35,7 +35,9 @@ export function clearTokens() {
 
 export function parseJwtPayload(token) {
   try {
-    return JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+    const b64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    const padded = b64 + '='.repeat((4 - b64.length % 4) % 4);
+    return JSON.parse(atob(padded));
   } catch {
     return null;
   }

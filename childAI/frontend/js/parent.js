@@ -1,5 +1,5 @@
 import { api } from './api.js';
-import { clearTokens } from './auth.js';
+import { clearTokens, parseJwtPayload } from './auth.js';
 
 let selectedChildId   = null;
 let selectedChildName = null;
@@ -16,13 +16,9 @@ export async function init() {
   const avatar = document.getElementById('user-avatar');
   if (avatar && displayName) avatar.textContent = displayName[0].toUpperCase();
   const emailEl = document.getElementById('user-email');
-  const email = sessionStorage.getItem('user_email') || (() => {
-    try {
-      const t = sessionStorage.getItem('app_token');
-      return t ? JSON.parse(atob(t.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')))?.email ?? '' : '';
-    } catch { return ''; }
-  })();
-  if (emailEl && email) emailEl.textContent = email;
+  const tok = sessionStorage.getItem('app_token');
+  const email = sessionStorage.getItem('user_email') || (tok ? parseJwtPayload(tok)?.email : '') || '';
+  if (emailEl) emailEl.textContent = email;
 
   document.getElementById('logout-btn').addEventListener('click', () => {
     clearTokens();

@@ -1,24 +1,17 @@
 // chatter.js — Learner chat dashboard logic
 import { api } from './api.js';
-import { clearTokens } from './auth.js';
+import { clearTokens, parseJwtPayload } from './auth.js';
 
 const displayName = sessionStorage.getItem('display_name') ?? 'Learner';
 let activeConversationId = null;
 let streamCtrl = null;
 
-function emailFromToken() {
-  try {
-    const t = sessionStorage.getItem('app_token');
-    if (!t) return '';
-    return JSON.parse(atob(t.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')))?.email ?? '';
-  } catch { return ''; }
-}
-
 export async function init() {
   document.getElementById('user-name').textContent = displayName;
   const emailEl = document.getElementById('user-email');
-  const email = sessionStorage.getItem('user_email') || emailFromToken();
-  if (emailEl && email) emailEl.textContent = email;
+  const tok = sessionStorage.getItem('app_token');
+  const email = sessionStorage.getItem('user_email') || (tok ? parseJwtPayload(tok)?.email : '') || '';
+  if (emailEl) emailEl.textContent = email;
 
   document.getElementById('logout-btn').addEventListener('click', () => {
     clearTokens();
