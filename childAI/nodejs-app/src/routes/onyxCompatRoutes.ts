@@ -31,34 +31,29 @@ export const onyxCompatRoutes: FastifyPluginAsync = async (fastify) => {
    * If we have a real user via JWT (set via Bearer header by the proxy
    * patch in Task 10), return their info. Otherwise return an anonymous
    * placeholder so Onyx's anonymous-mode UI flows.
+   *
+   * Note: our JWT payload doesn't carry the user's email (it's only stored
+   * in the DB users table). For the Onyx /api/me display, we synthesize
+   * `<sub>@bubbli.local`. A future improvement could look up the real email
+   * from userRepository if needed.
    */
   fastify.get<{ Reply: OnyxUser }>('/api/me', async (request) => {
     const authHeader = request.headers.authorization ?? '';
     if (authHeader.startsWith('Bearer ')) {
       try {
-        const jwtModule = await import('../auth/jwt');
-        // Find whatever the project's verify function is named — it varies
-        // ('verifyAppJwt', 'verifyJwt', 'verify', etc.). The dynamic import
-        // here keeps the test isolated from real JWT signing keys.
-        const verifier =
-          jwtModule.verifyAppJwt ??
-          jwtModule.verifyJwt ??
-          jwtModule.verify ??
-          (jwtModule as any).default;
-        if (typeof verifier === 'function') {
-          const payload = verifier(authHeader.slice(7));
-          return {
-            id: payload.sub ?? payload.dbId ?? 'anon',
-            email: payload.email ?? 'unknown@bubbli.local',
-            is_active: true,
-            is_verified: true,
-            role: 'basic',
-            preferences: {},
-            is_anonymous_user: false,
-          };
-        }
+        const { verifyJwt } = await import('../auth/jwt');
+        const payload = await verifyJwt(authHeader.slice(7));
+        return {
+          id: payload.userId ?? payload.sub,
+          email: `${payload.sub}@bubbli.local`,
+          is_active: true,
+          is_verified: true,
+          role: 'basic',
+          preferences: {},
+          is_anonymous_user: false,
+        };
       } catch {
-        // fall through to anonymous
+        // invalid/expired token — fall through to anonymous
       }
     }
     return {
