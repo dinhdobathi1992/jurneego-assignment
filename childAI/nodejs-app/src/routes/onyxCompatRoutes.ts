@@ -44,9 +44,14 @@ export const onyxCompatRoutes: FastifyPluginAsync = async (fastify) => {
 
   /**
    * Onyx calls /api/me on every page load with credentials:'include'.
-   * If we have a real user via JWT (set via Bearer header by the proxy
-   * patch in Task 10), return their info. Otherwise return an anonymous
-   * placeholder so Onyx's anonymous-mode UI flows.
+   * Two code paths reach this endpoint:
+   *   1. Client-side fetch via the Next.js catch-all proxy — the proxy
+   *      patch translates the `app_token` cookie into `Authorization: Bearer`.
+   *   2. Server-side fetch via fetchSS (`getCurrentUserSS()`) — bypasses
+   *      the proxy entirely and sends cookies directly. No Authorization
+   *      header is set.
+   * To handle both, we look for the JWT in the Authorization header first,
+   * then fall back to parsing the `app_token` cookie ourselves.
    *
    * Note: our JWT payload doesn't carry the user's email (it's only stored
    * in the DB users table). For the Onyx /api/me display, we synthesize
@@ -54,11 +59,21 @@ export const onyxCompatRoutes: FastifyPluginAsync = async (fastify) => {
    * from userRepository if needed.
    */
   fastify.get<{ Reply: OnyxUser }>('/api/me', async (request) => {
+    let token: string | null = null;
+
     const authHeader = request.headers.authorization ?? '';
     if (authHeader.startsWith('Bearer ')) {
+      token = authHeader.slice(7);
+    } else {
+      const cookieHeader = request.headers.cookie ?? '';
+      const match = cookieHeader.match(/(?:^|;\s*)app_token=([^;]+)/);
+      if (match) token = decodeURIComponent(match[1]);
+    }
+
+    if (token) {
       try {
         const { verifyJwt } = await import('../auth/jwt');
-        const payload = await verifyJwt(authHeader.slice(7));
+        const payload = await verifyJwt(token);
         return {
           id: payload.userId ?? payload.sub,
           email: `${payload.sub}@bubbli.local`,
@@ -72,6 +87,7 @@ export const onyxCompatRoutes: FastifyPluginAsync = async (fastify) => {
         // invalid/expired token — fall through to anonymous
       }
     }
+
     return {
       id: 'anonymous',
       email: 'anonymous@bubbli.local',
