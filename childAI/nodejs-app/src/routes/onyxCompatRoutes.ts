@@ -232,11 +232,16 @@ export const onyxCompatRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get('/api/search-settings/get-secondary-search-settings', async () => null);
   fastify.get('/api/search-settings/unstructured-api-key-set', async () => false);
 
-  // ── User extras (files, PATs, OAuth status, voice) ───────────────────────
+  // ── User extras (files, PATs, OAuth status, voice, pinned assistants) ────
   fastify.get('/api/user/files/recent', async () => ([]));
   fastify.get('/api/user/pats', async () => ([]));
   fastify.get('/api/user-oauth-token/status', async () => ({}));
   fastify.get('/api/voice/status', async () => ({ voice_enabled: false }));
+
+  // No-op for now — clicking the pin/unpin icon on agents in the sidebar
+  // hits this. Returning 204 lets the optimistic UI stay in sync without
+  // us having to persist anything.
+  fastify.patch('/api/user/pinned-assistants', async (_request, reply) => reply.status(204).send());
 
   // ── Chat sessions: list ───────────────────────────────────────────────────
   fastify.get('/api/chat/get-user-chat-sessions', { preHandler: [authenticate] }, async (request) => {
@@ -267,6 +272,24 @@ export const onyxCompatRoutes: FastifyPluginAsync = async (fastify) => {
         is_flagged: conv.is_flagged,
       });
 
+      const messages = toOnyxMessages(
+        (conv.messages ?? []).map((m) => ({
+          id: m.id,
+          role: m.role,
+          content: m.content,
+          created_at: m.created_at,
+          is_safe: m.is_safe ?? undefined,
+        }))
+      );
+
+      // Onyx's processRawChatHistory expects packets[agentMessageInd] for
+      // every assistant message — one Packet[] per assistant turn. For an
+      // already-finalized chat history we have no live packets to replay,
+      // so each entry is an empty array. The count must match the number
+      // of assistant messages or the indexer reads `undefined`.
+      const assistantCount = messages.filter((m) => m.message_type === 'assistant').length;
+      const packets: never[][] = Array.from({ length: assistantCount }, () => []);
+
       return {
         chat_session_id: session.id,
         description: session.name,
@@ -274,15 +297,8 @@ export const onyxCompatRoutes: FastifyPluginAsync = async (fastify) => {
         persona_name: 'Bubbli',
         current_alternate_model: null,
         current_temperature_override: null,
-        messages: toOnyxMessages(
-          (conv.messages ?? []).map((m) => ({
-            id: m.id,
-            role: m.role,
-            content: m.content,
-            created_at: m.created_at,
-            is_safe: m.is_safe ?? undefined,
-          }))
-        ),
+        messages,
+        packets,
         time_created: session.time_created,
         shared_status: 'private',
         current_folder_id: null,
