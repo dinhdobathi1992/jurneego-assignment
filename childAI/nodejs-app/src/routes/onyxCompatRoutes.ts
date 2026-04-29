@@ -1,9 +1,20 @@
-import { FastifyPluginAsync } from 'fastify';
+import { FastifyPluginAsync, FastifyReply } from 'fastify';
 import { OnyxAuthType, OnyxUser } from '../services/onyxShapes';
 import { authenticate } from '../middleware/authMiddleware';
 import { canAccessConversation } from '../auth/ownership';
 import { listLearnerConversations, getConversation, createNewConversation } from '../services/conversationService';
 import { toOnyxSession, toOnyxMessages } from '../services/onyxShapes';
+import { SSEWriter, SSEEvent } from '../services/streaming/sseWriter';
+import { handleStreamingMessage } from '../services/streaming/streamMessageService';
+import {
+  encodePacket,
+  startPacket,
+  deltaPacket,
+  sectionEndPacket,
+  stopPacket,
+  errorPacket,
+  OnyxPacket,
+} from '../services/onyxStreamAdapter';
 
 /**
  * Compatibility shim for the upstream Onyx frontend.
@@ -256,4 +267,191 @@ export const onyxCompatRoutes: FastifyPluginAsync = async (fastify) => {
       return reply.status(204).send();
     }
   );
+
+  // ── Chat: send message (NDJSON streaming) ─────────────────────────────────
+  //
+  // Onyx's `sendMessage()` POSTs to `/api/chat/send-chat-message` and parses
+  // the response body as **newline-delimited JSON** (one Packet per line)
+  // via `handleSSEStream`. We translate from our internal SSE-shaped event
+  // stream (`assistant.chunk`, `assistant.completed`, `error`) into the
+  // Onyx Packet shape (`message_start`, `message_delta`, `section_end`,
+  // `stop`, `error`) on the wire.
+  //
+  // Implementation note: rather than duplicate the safety pipeline, we
+  // reuse `handleStreamingMessage()` by passing it a writer that has the
+  // same surface as `SSEWriter` but emits Onyx Packets to the raw socket.
+  // The cast through `unknown` is required because `SSEWriter` exposes
+  // private class fields (TS nominal typing), but at runtime Fastify only
+  // ever calls public methods (`write`, `close`, `onClose`, `start`).
+  fastify.post<{
+    Body: {
+      message: string;
+      chat_session_id: string;
+      parent_message_id?: number | null;
+    };
+  }>(
+    '/api/chat/send-chat-message',
+    { preHandler: [authenticate] },
+    async (request, reply) => {
+      const user = request.user!;
+      const body = request.body ?? ({} as { message?: string; chat_session_id?: string });
+      const message = body.message;
+      const chatSessionId = body.chat_session_id;
+
+      if (!message || !chatSessionId) {
+        return reply.status(400).send({ detail: 'message and chat_session_id required' });
+      }
+
+      const allowed = await canAccessConversation(chatSessionId, user.dbId, user.role);
+      if (!allowed) {
+        return reply.status(403).send({ detail: 'Access denied' });
+      }
+
+      // Build a packet writer that satisfies the public SSEWriter surface.
+      const packetWriter = new OnyxPacketWriter(reply, chatSessionId);
+      packetWriter.start(request.headers.origin ?? '*');
+
+      const abortController = new AbortController();
+      packetWriter.onClose(() => abortController.abort());
+
+      // Don't await — packets stream out as the underlying flow runs.
+      // Errors inside the flow are translated to error packets by the
+      // writer, so we don't expect rejects here in practice.
+      handleStreamingMessage({
+        conversationId: chatSessionId,
+        learnerDbId: user.dbId,
+        content: message,
+        requestId: request.requestId,
+        sse: packetWriter as unknown as SSEWriter,
+        abortSignal: abortController.signal,
+      }).catch((err) => {
+        request.log.error({ err }, 'Onyx send-chat-message handler error');
+        packetWriter.close();
+      });
+
+      return reply;
+    }
+  );
 };
+
+/**
+ * Adapter that exposes the same public surface as `SSEWriter` but writes
+ * Onyx-shaped NDJSON Packets to the raw HTTP response. Each call to
+ * `.write()` is translated into 0..n Packets and serialized with
+ * `encodePacket()` (which appends a single trailing '\n').
+ *
+ * Mapping:
+ *   first `assistant.chunk`  → `message_start` (id=session_id) + `message_delta`
+ *   subsequent chunks        → `message_delta`
+ *   `assistant.completed`    → `section_end` + `stop`
+ *   `error`                  → `error` packet
+ *   `done`                   → no-op (we already sent stop on completed,
+ *                              and unsafe-input flows go straight to
+ *                              `assistant.completed` in the producer)
+ *   `safety.checked` etc.    → no-op (Onyx doesn't surface these)
+ *
+ * The class is intentionally NOT a subclass of `SSEWriter`: SSEWriter's
+ * fields are `private`, which would block subclassing without modifying
+ * sseWriter.ts. We satisfy the type at the call site via a structural cast.
+ */
+class OnyxPacketWriter {
+  private reply: FastifyReply;
+  private sessionId: string;
+  private closed = false;
+  private startedMessage = false;
+  private heartbeatTimer?: NodeJS.Timeout;
+
+  constructor(reply: FastifyReply, sessionId: string) {
+    this.reply = reply;
+    this.sessionId = sessionId;
+  }
+
+  start(origin = '*'): void {
+    this.reply.raw.writeHead(200, {
+      'Content-Type': 'application/x-ndjson',
+      'Cache-Control': 'no-cache, no-transform',
+      'Connection': 'keep-alive',
+      'X-Accel-Buffering': 'no',
+      'Access-Control-Allow-Origin': origin,
+      'Access-Control-Allow-Credentials': 'true',
+    });
+    // Newline-only "heartbeat" — empty lines are safely skipped by
+    // Onyx's NDJSON parser (`if (line.trim() === '') continue;`).
+    this.heartbeatTimer = setInterval(() => {
+      if (this.closed) return;
+      this.reply.raw.write('\n');
+    }, 15_000);
+  }
+
+  async write(event: SSEEvent): Promise<void> {
+    if (this.closed) return;
+
+    switch (event.event) {
+      case 'assistant.chunk': {
+        const content = String((event.data as { content?: unknown }).content ?? '');
+        if (!this.startedMessage) {
+          this.writePacket(startPacket({ id: this.sessionId, content: '' }));
+          this.startedMessage = true;
+        }
+        if (content.length > 0) {
+          this.writePacket(deltaPacket(content));
+        }
+        return;
+      }
+      case 'assistant.completed': {
+        // Unsafe-input flows skip the chunk events entirely — they jump
+        // straight to assistant.completed with the deflection content.
+        // We still need to open and close a message section here, or the
+        // Onyx UI will spin forever on an empty turn.
+        if (!this.startedMessage) {
+          const content = String((event.data as { content?: unknown }).content ?? '');
+          this.writePacket(startPacket({ id: this.sessionId, content }));
+          if (content.length > 0) {
+            this.writePacket(deltaPacket(content));
+          }
+          this.startedMessage = true;
+        }
+        this.writePacket(sectionEndPacket());
+        this.writePacket(stopPacket({ stopReason: 'finished' }));
+        return;
+      }
+      case 'error': {
+        const data = event.data as { message?: string; code?: string };
+        this.writePacket(errorPacket(data.message ?? data.code ?? 'stream error'));
+        return;
+      }
+      // Onyx doesn't surface these; drop on the floor.
+      case 'message.accepted':
+      case 'safety.checked':
+      case 'ai.started':
+      case 'ai.progress':
+      case 'done':
+        return;
+    }
+  }
+
+  private writePacket(p: OnyxPacket): void {
+    if (this.closed) return;
+    this.reply.raw.write(encodePacket(p));
+  }
+
+  close(): void {
+    if (this.closed) return;
+    this.closed = true;
+    if (this.heartbeatTimer) clearInterval(this.heartbeatTimer);
+    if (!this.reply.raw.destroyed) {
+      this.reply.raw.end();
+    }
+  }
+
+  get isClosed(): boolean {
+    return this.closed || this.reply.raw.destroyed;
+  }
+
+  onClose(fn: () => void): void {
+    this.reply.raw.on('close', () => {
+      this.closed = true;
+      fn();
+    });
+  }
+}
