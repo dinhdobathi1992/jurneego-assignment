@@ -208,7 +208,7 @@ export const onyxCompatRoutes: FastifyPluginAsync = async (fastify) => {
         messages: toOnyxMessages(
           (conv.messages ?? []).map((m) => ({
             id: m.id,
-            role: m.role as 'learner' | 'assistant' | 'system',
+            role: m.role,
             content: m.content,
             created_at: m.created_at,
             is_safe: m.is_safe ?? undefined,

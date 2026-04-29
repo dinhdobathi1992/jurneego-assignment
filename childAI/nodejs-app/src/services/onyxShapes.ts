@@ -116,7 +116,7 @@ export interface OnyxBackendChatSession {
  */
 export function toOnyxMessages(messages: Array<{
   id: string;
-  role: 'learner' | 'assistant' | 'system';
+  role: string;
   content: string;
   created_at: string | Date;
   is_safe?: boolean;
