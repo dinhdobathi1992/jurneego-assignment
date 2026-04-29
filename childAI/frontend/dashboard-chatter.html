@@ -34,6 +34,9 @@
     /* Onyx-style action toolbar fade */
     .ai-msg-group .ai-actions { opacity: 0; transition: opacity 150ms ease; }
     .ai-msg-group:hover .ai-actions { opacity: 1; }
+    /* Keep the toolbar visible whenever feedback is set, so a learner who
+       clicks thumbs and moves the mouse away still sees their choice. */
+    .ai-msg-group .ai-actions:has([data-active="true"]) { opacity: 1; }
 
     /* Suggestion card hover lift */
     .suggestion-chip { transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1); }
@@ -277,7 +280,7 @@
   </div>
 
   <script type="module">
-    import { init } from './js/chatter.js?v=8';
+    import { init } from './js/chatter.js?v=9';
     import { routeByRole } from './js/auth.js';
 
     const token = sessionStorage.getItem('app_token');
