@@ -116,6 +116,7 @@ window._selectStudent = async function(studentId, name, btn) {
   document.getElementById('student-panel-title').textContent = `${name}'s Activity`;
   document.getElementById('student-panel').classList.remove('hidden');
   document.getElementById('teacher-empty').classList.add('hidden');
+  loadStudentParents(studentId);
 
   const convList = document.getElementById('teacher-conv-list');
   convList.innerHTML = '<p class="text-xs text-gray-400 px-3 py-2">Loading…</p>';
@@ -583,6 +584,89 @@ window._closePrivacyModal = function() {
 
 window._closeConvModal = function() {
   document.getElementById('conv-modal').classList.add('hidden');
+};
+
+// ─── Parent Management ─────────────────────────────────────────────────────────
+
+async function loadStudentParents(studentId) {
+  const list = document.getElementById('parents-list');
+  if (!list) return;
+  list.innerHTML = '<p class="text-xs text-gray-400 px-1 py-1">Loading…</p>';
+  try {
+    const data = await api.get(`/api/teacher/students/${studentId}/parents`);
+    const parents = data?.parents ?? [];
+    if (!parents.length) {
+      list.innerHTML = '<p class="text-xs text-gray-400 px-1 py-1 text-center">No parents linked</p>';
+      return;
+    }
+    list.innerHTML = parents.map(p => `
+      <div class="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-[#F3F0FF] group">
+        <div class="w-7 h-7 rounded-full bg-[#EDE9FE] flex items-center justify-center text-[#7C3AED] text-xs font-bold flex-shrink-0">
+          ${escHtml((p.name || 'P')[0].toUpperCase())}
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-xs font-semibold font-jakarta text-[#0A3D3C] truncate">${escHtml(p.name)}</p>
+          ${p.email ? `<p class="text-[10px] text-gray-400 truncate">${escHtml(p.email)}</p>` : ''}
+        </div>
+        <button
+          onclick="window._removeParentLink('${escHtml(p.parent_id)}', this)"
+          class="opacity-0 group-hover:opacity-100 text-xs text-gray-300 hover:text-[#EE6742] cursor-pointer transition-opacity px-1"
+          title="Remove parent link">×</button>
+      </div>
+    `).join('');
+  } catch (err) {
+    list.innerHTML = '<p class="text-xs text-[#EE6742] px-1 py-1">Failed to load</p>';
+    console.error('loadStudentParents error:', err);
+  }
+}
+
+window._toggleAddParentForm = function() {
+  const form = document.getElementById('parent-add-form');
+  const input = document.getElementById('parent-email-input');
+  if (!form) return;
+  const isHidden = form.classList.contains('hidden');
+  form.classList.toggle('hidden', !isHidden);
+  if (isHidden && input) { input.value = ''; input.focus(); }
+};
+
+window._cancelAddParent = function() {
+  const form = document.getElementById('parent-add-form');
+  if (form) form.classList.add('hidden');
+};
+
+window._submitAddParent = async function() {
+  if (!selectedStudentId) return;
+  const input = document.getElementById('parent-email-input');
+  const email = input?.value?.trim();
+  if (!email) { input?.focus(); return; }
+
+  const linkBtn = document.querySelector('#parent-add-form button');
+  if (linkBtn) { linkBtn.textContent = 'Linking…'; linkBtn.disabled = true; }
+
+  try {
+    await api.post(`/api/teacher/students/${selectedStudentId}/parents`, { email });
+    document.getElementById('parent-add-form')?.classList.add('hidden');
+    await loadStudentParents(selectedStudentId);
+  } catch (err) {
+    const msg = err?.message || 'Failed to link parent';
+    alert(msg);
+  } finally {
+    if (linkBtn) { linkBtn.textContent = 'Link'; linkBtn.disabled = false; }
+  }
+};
+
+window._removeParentLink = async function(parentId, btn) {
+  if (!selectedStudentId) return;
+  if (!confirm('Remove this parent link?')) return;
+  const orig = btn.textContent;
+  btn.textContent = '…';
+  try {
+    await api.delete(`/api/teacher/students/${selectedStudentId}/parents/${parentId}`);
+    await loadStudentParents(selectedStudentId);
+  } catch {
+    alert('Failed to remove parent link');
+    btn.textContent = orig;
+  }
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────

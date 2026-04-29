@@ -142,6 +142,33 @@
           </h3>
         </div>
         <div class="flex-1 overflow-y-auto px-2 pb-2 space-y-0.5 pt-1" id="teacher-conv-list"></div>
+
+        <!-- Parents section -->
+        <div class="border-t border-[#DAF0EE] flex-shrink-0 pb-3">
+          <div class="flex items-center justify-between px-3 pt-2 pb-1">
+            <p class="text-[10px] text-gray-400 uppercase tracking-widest font-semibold">Parents</p>
+            <button id="add-parent-btn"
+                    onclick="window._toggleAddParentForm()"
+                    class="text-[10px] font-semibold text-[#0A3D3C] bg-[#DAF0EE] hover:bg-[#c5e8e4] rounded-full px-2 py-0.5 cursor-pointer transition-colors">
+              + Add
+            </button>
+          </div>
+          <div id="parent-add-form" class="hidden px-3 pb-2">
+            <input id="parent-email-input" type="email" placeholder="parent@email.com"
+                   class="w-full text-xs border border-[#DAF0EE] rounded-lg px-2 py-1.5 mb-1.5 focus:outline-none focus:border-[#0A3D3C]" />
+            <div class="flex gap-1.5">
+              <button onclick="window._submitAddParent()"
+                      class="flex-1 text-xs font-semibold bg-[#0A3D3C] text-white rounded-lg py-1 cursor-pointer hover:bg-[#0d4f4e] transition-colors">
+                Link
+              </button>
+              <button onclick="window._cancelAddParent()"
+                      class="flex-1 text-xs text-gray-500 border border-gray-200 rounded-lg py-1 cursor-pointer hover:bg-gray-50 transition-colors">
+                Cancel
+              </button>
+            </div>
+          </div>
+          <div id="parents-list" class="px-2 space-y-1"></div>
+        </div>
       </div>
 
       <!-- Right: Message thread + empty state -->
