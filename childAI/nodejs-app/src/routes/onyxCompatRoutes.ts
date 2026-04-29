@@ -6,6 +6,7 @@ import { listLearnerConversations, getConversation, createNewConversation } from
 import { toOnyxSession, toOnyxMessages } from '../services/onyxShapes';
 import { SSEWriter, SSEEvent } from '../services/streaming/sseWriter';
 import { handleStreamingMessage } from '../services/streaming/streamMessageService';
+import { sseStreamsActive, sseStreamDurationSeconds } from '../services/observability/metrics';
 import {
   encodePacket,
   startPacket,
@@ -326,7 +327,7 @@ export const onyxCompatRoutes: FastifyPluginAsync = async (fastify) => {
         abortSignal: abortController.signal,
       }).catch((err) => {
         request.log.error({ err }, 'Onyx send-chat-message handler error');
-        packetWriter.close();
+        packetWriter.close('error');
       });
 
       return reply;
@@ -359,6 +360,7 @@ class OnyxPacketWriter {
   private sessionId: string;
   private closed = false;
   private startedMessage = false;
+  private startedAt = 0;
   private heartbeatTimer?: NodeJS.Timeout;
 
   constructor(reply: FastifyReply, sessionId: string) {
@@ -367,6 +369,8 @@ class OnyxPacketWriter {
   }
 
   start(origin = '*'): void {
+    this.startedAt = Date.now();
+    sseStreamsActive.inc();
     this.reply.raw.writeHead(200, {
       'Content-Type': 'application/x-ndjson',
       'Cache-Control': 'no-cache, no-transform',
@@ -390,11 +394,11 @@ class OnyxPacketWriter {
       case 'assistant.chunk': {
         const content = String((event.data as { content?: unknown }).content ?? '');
         if (!this.startedMessage) {
-          this.writePacket(startPacket({ id: this.sessionId, content: '' }));
+          await this.writePacket(startPacket({ id: this.sessionId, content: '' }));
           this.startedMessage = true;
         }
         if (content.length > 0) {
-          this.writePacket(deltaPacket(content));
+          await this.writePacket(deltaPacket(content));
         }
         return;
       }
@@ -405,19 +409,19 @@ class OnyxPacketWriter {
         // Onyx UI will spin forever on an empty turn.
         if (!this.startedMessage) {
           const content = String((event.data as { content?: unknown }).content ?? '');
-          this.writePacket(startPacket({ id: this.sessionId, content }));
+          await this.writePacket(startPacket({ id: this.sessionId, content }));
           if (content.length > 0) {
-            this.writePacket(deltaPacket(content));
+            await this.writePacket(deltaPacket(content));
           }
           this.startedMessage = true;
         }
-        this.writePacket(sectionEndPacket());
-        this.writePacket(stopPacket({ stopReason: 'finished' }));
+        await this.writePacket(sectionEndPacket());
+        await this.writePacket(stopPacket({ stopReason: 'finished' }));
         return;
       }
       case 'error': {
         const data = event.data as { message?: string; code?: string };
-        this.writePacket(errorPacket(data.message ?? data.code ?? 'stream error'));
+        await this.writePacket(errorPacket(data.message ?? data.code ?? 'stream error'));
         return;
       }
       // Onyx doesn't surface these; drop on the floor.
@@ -430,15 +434,23 @@ class OnyxPacketWriter {
     }
   }
 
-  private writePacket(p: OnyxPacket): void {
+  /** Write a packet with backpressure handling — awaits 'drain' if the buffer is full. */
+  private async writePacket(p: OnyxPacket): Promise<void> {
     if (this.closed) return;
-    this.reply.raw.write(encodePacket(p));
+    const canContinue = this.reply.raw.write(encodePacket(p));
+    if (!canContinue) {
+      await new Promise<void>((resolve) => this.reply.raw.once('drain', resolve));
+    }
   }
 
-  close(): void {
+  close(status: 'complete' | 'aborted' | 'error' = 'complete'): void {
     if (this.closed) return;
     this.closed = true;
     if (this.heartbeatTimer) clearInterval(this.heartbeatTimer);
+    sseStreamsActive.dec();
+    if (this.startedAt) {
+      sseStreamDurationSeconds.observe({ status }, (Date.now() - this.startedAt) / 1000);
+    }
     if (!this.reply.raw.destroyed) {
       this.reply.raw.end();
     }
