@@ -24,7 +24,6 @@ import {
 } from '../repositories/learningObjectiveRepository';
 import { guidanceNotesCreatedTotal } from '../services/observability/metrics';
 import { getDb } from '../db/kysely';
-import { getPool } from '../db/pool';
 
 export const teacherRoutes: FastifyPluginAsync = async (fastify) => {
   const teacherGuard = requireRole('teacher', 'admin');
@@ -387,6 +386,11 @@ export const teacherRoutes: FastifyPluginAsync = async (fastify) => {
     },
     async (request, reply) => {
       const { studentId } = request.params as { studentId: string };
+      const user = request.user!;
+      if (user.role !== 'admin') {
+        const assigned = await isAssignedTeacher(user.dbId, studentId);
+        if (!assigned) return reply.status(403).send({ error: 'Student not in your assigned classrooms' });
+      }
       const db = getDb();
       const rows = await db
         .selectFrom('parent_child_links as l')
@@ -424,6 +428,11 @@ export const teacherRoutes: FastifyPluginAsync = async (fastify) => {
     },
     async (request, reply) => {
       const { studentId } = request.params as { studentId: string };
+      const user = request.user!;
+      if (user.role !== 'admin') {
+        const assigned = await isAssignedTeacher(user.dbId, studentId);
+        if (!assigned) return reply.status(403).send({ error: 'Student not in your assigned classrooms' });
+      }
       const { email } = request.body as { email: string };
       const normalizedEmail = email.toLowerCase().trim();
       const db = getDb();
@@ -457,17 +466,21 @@ export const teacherRoutes: FastifyPluginAsync = async (fastify) => {
         .executeTakeFirst();
       if (existing) return reply.status(409).send({ error: 'Parent is already linked to this student' });
 
-      const pool = getPool();
-      const inserted = await pool.query(
-        `INSERT INTO parent_child_links (parent_user_id, child_user_id, relationship_type, status, consent_source)
-         VALUES ($1, $2, 'parent', 'active', 'teacher_assigned')
-         RETURNING id`,
-        [parentUser.id, studentId]
-      );
+      const inserted = await db
+        .insertInto('parent_child_links')
+        .values({
+          parent_user_id: parentUser.id,
+          child_user_id: studentId,
+          relationship_type: 'parent',
+          status: 'active',
+          consent_source: 'teacher_assigned',
+        })
+        .returning('id')
+        .executeTakeFirstOrThrow();
 
       return reply.status(201).send({
         link: {
-          link_id: inserted.rows[0].id,
+          link_id: inserted.id,
           parent_id: parentUser.id,
           name: parentUser.display_name?.trim() || normalizedEmail.split('@')[0],
           email: normalizedEmail,
@@ -494,6 +507,11 @@ export const teacherRoutes: FastifyPluginAsync = async (fastify) => {
     },
     async (request, reply) => {
       const { studentId, parentId } = request.params as { studentId: string; parentId: string };
+      const user = request.user!;
+      if (user.role !== 'admin') {
+        const assigned = await isAssignedTeacher(user.dbId, studentId);
+        if (!assigned) return reply.status(403).send({ error: 'Student not in your assigned classrooms' });
+      }
       const db = getDb();
       const result = await db
         .deleteFrom('parent_child_links')
