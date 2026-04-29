@@ -1,6 +1,18 @@
---- /tmp/onyx-route-original.ts	2026-04-29 13:26:39
-+++ /Users/thi/Devops/JurneeGo_Assignment/childAI/onyx-web/src/app/api/[...path]/route.ts	2026-04-29 13:26:49
-@@ -103,6 +103,13 @@
+--- /tmp/onyx-route-original.ts	2026-04-29 14:50:31
++++ onyx-web/src/app/api/[...path]/route.ts	2026-04-29 14:49:39
+@@ -77,7 +77,10 @@
+   }
+ 
+   try {
+-    const backendUrl = new URL(`${INTERNAL_URL}/${path.join("/")}`);
++    // childAI: our Fastify keeps the `/api/` prefix on all routes (unlike
++    // Onyx's Python backend which serves at root). Re-add the prefix so
++    // /api/me on this proxy reaches /api/me on Fastify, not /me.
++    const backendUrl = new URL(`${INTERNAL_URL}/api/${path.join("/")}`);
+ 
+     // Get the URL parameters from the request
+     const urlParams = new URLSearchParams(request.url.split("?")[1]);
+@@ -103,6 +106,13 @@
        );
      }
  
