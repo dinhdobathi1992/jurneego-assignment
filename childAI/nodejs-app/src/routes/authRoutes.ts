@@ -54,7 +54,7 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
       }
 
       const externalSubject = googleUser.sub;
-      const email           = googleUser.email ?? '';
+      const email           = googleUser.email?.toLowerCase().trim() ?? '';
       // Use trim + || so empty string from Google falls through to email, then 'User'
       const displayName     = googleUser.name?.trim() || googleUser.email?.trim() || 'User';
 
@@ -85,7 +85,7 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
               email = COALESCE(email, NULLIF($2, '')),
               primary_role = $3
              WHERE external_subject = $4`,
-            [displayName, email || null, role, externalSubject]
+            [displayName, email !== '' ? email : null, role, externalSubject]
           );
         } else {
           role = mappedRole ?? 'learner';
@@ -93,7 +93,7 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
             `INSERT INTO users (external_subject, primary_role, display_name, email, preferred_language)
              VALUES ($1, $2, $3, $4, 'en')
              RETURNING id, primary_role`,
-            [externalSubject, role, displayName, email || null]
+            [externalSubject, role, displayName, email !== '' ? email : null]
           );
           role = inserted.rows[0].primary_role;
         }
