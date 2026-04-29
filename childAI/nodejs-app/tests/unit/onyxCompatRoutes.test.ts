@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import Fastify, { FastifyInstance } from 'fastify';
 import { onyxCompatRoutes } from '../../src/routes/onyxCompatRoutes';
-import { toOnyxSession } from '../../src/services/onyxShapes';
+import { toOnyxSession, toOnyxMessages } from '../../src/services/onyxShapes';
 
 let app: FastifyInstance;
 
@@ -134,5 +134,35 @@ describe('toOnyxSession', () => {
     });
     expect(out.name).toBe('Chat abcdef');
     expect(out.is_flagged).toBe(false);
+  });
+});
+
+describe('toOnyxMessages', () => {
+  it('produces a linear thread with correct parent/child links', () => {
+    const out = toOnyxMessages([
+      { id: 'aaa', role: 'learner', content: 'hi', created_at: '2026-04-01T10:00:00.000Z' },
+      { id: 'bbb', role: 'assistant', content: 'hello!', created_at: '2026-04-01T10:00:01.000Z' },
+      { id: 'ccc', role: 'learner', content: 'how are you', created_at: '2026-04-01T10:00:02.000Z' },
+    ]);
+    expect(out).toHaveLength(3);
+    expect(out[0]).toMatchObject({ message_id: 1, message_type: 'user', parent_message: null, latest_child_message: 2 });
+    expect(out[1]).toMatchObject({ message_id: 2, message_type: 'assistant', parent_message: 1, latest_child_message: 3 });
+    expect(out[2]).toMatchObject({ message_id: 3, message_type: 'user', parent_message: 2, latest_child_message: null });
+  });
+
+  it('sorts by created_at even if input is reversed', () => {
+    const out = toOnyxMessages([
+      { id: 'b', role: 'assistant', content: 'second', created_at: '2026-04-01T10:00:01.000Z' },
+      { id: 'a', role: 'learner', content: 'first', created_at: '2026-04-01T10:00:00.000Z' },
+    ]);
+    expect(out[0].message).toBe('first');
+    expect(out[1].message).toBe('second');
+  });
+
+  it('carries is_safe through', () => {
+    const out = toOnyxMessages([
+      { id: 'a', role: 'assistant', content: 'flagged', created_at: '2026-04-01T10:00:00.000Z', is_safe: false },
+    ]);
+    expect(out[0].is_safe).toBe(false);
   });
 });

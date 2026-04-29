@@ -1,8 +1,9 @@
 import { FastifyPluginAsync } from 'fastify';
 import { OnyxAuthType, OnyxUser } from '../services/onyxShapes';
 import { authenticate } from '../middleware/authMiddleware';
-import { listLearnerConversations } from '../services/conversationService';
-import { toOnyxSession } from '../services/onyxShapes';
+import { canAccessConversation } from '../auth/ownership';
+import { getConversation, listLearnerConversations } from '../services/conversationService';
+import { toOnyxSession, toOnyxMessages } from '../services/onyxShapes';
 
 /**
  * Compatibility shim for the upstream Onyx frontend.
@@ -174,4 +175,49 @@ export const onyxCompatRoutes: FastifyPluginAsync = async (fastify) => {
     const conversations = await listLearnerConversations(user.dbId, 50);
     return { sessions: conversations.map(toOnyxSession) };
   });
+
+  // ── Chat sessions: detail ─────────────────────────────────────────────────
+  fastify.get<{ Params: { sessionId: string } }>(
+    '/api/chat/get-chat-session/:sessionId',
+    { preHandler: [authenticate] },
+    async (request, reply) => {
+      const user = request.user!;
+      const { sessionId } = request.params;
+
+      const allowed = await canAccessConversation(sessionId, user.dbId, user.role);
+      if (!allowed) return reply.status(403).send({ detail: 'Access denied' });
+
+      const conv = await getConversation(sessionId, true);
+      if (!conv) return reply.status(404).send({ detail: 'Not found' });
+
+      const session = toOnyxSession({
+        id: conv.id,
+        title: conv.title,
+        created_at: conv.created_at,
+        updated_at: conv.updated_at,
+        is_flagged: conv.is_flagged,
+      });
+
+      return {
+        chat_session_id: session.id,
+        description: session.name,
+        persona_id: 0,
+        persona_name: 'Bubbli',
+        current_alternate_model: null,
+        current_temperature_override: null,
+        messages: toOnyxMessages(
+          (conv.messages ?? []).map((m) => ({
+            id: m.id,
+            role: m.role as 'learner' | 'assistant' | 'system',
+            content: m.content,
+            created_at: m.created_at,
+            is_safe: m.is_safe ?? undefined,
+          }))
+        ),
+        time_created: session.time_created,
+        shared_status: 'private',
+        current_folder_id: null,
+      };
+    }
+  );
 };
