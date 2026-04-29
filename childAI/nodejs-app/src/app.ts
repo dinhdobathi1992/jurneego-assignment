@@ -20,7 +20,6 @@ import { parentRoutes } from './routes/parentRoutes';
 import { teacherRoutes } from './routes/teacherRoutes';
 import { sharedSessionRoutes } from './routes/sharedSessionRoutes';
 import { metricsRoute } from './services/observability/metricsRoute';
-import { onyxCompatRoutes } from './routes/onyxCompatRoutes';
 
 export async function buildApp(): Promise<FastifyInstance> {
   const app = Fastify({
@@ -122,7 +121,6 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(teacherRoutes);
   await app.register(sharedSessionRoutes);
   await app.register(metricsRoute);
-  await app.register(onyxCompatRoutes);
 
   return app;
 }
