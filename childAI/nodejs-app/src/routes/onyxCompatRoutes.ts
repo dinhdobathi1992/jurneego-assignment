@@ -192,6 +192,9 @@ export const onyxCompatRoutes: FastifyPluginAsync = async (fastify) => {
 
   // ── Projects ──────────────────────────────────────────────────────────────
   fastify.get('/api/user/projects', async () => ([]));
+  fastify.get('/api/user/projects/session/:sessionId/files', async () => ([]));
+  fastify.get('/api/user/projects/session/:sessionId/token-count', async () => ({ token_count: 0 }));
+  fastify.get('/api/federated/oauth-status', async () => ([]));
 
   // ── Notifications ─────────────────────────────────────────────────────────
   // Onyx's useNotifications hook does `data ?? []` then `.filter(...)`, so
