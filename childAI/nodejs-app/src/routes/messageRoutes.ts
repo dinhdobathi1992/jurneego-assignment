@@ -13,6 +13,7 @@ import {
 import {
   findMessageById,
   setMessageFeedback,
+  isValidFeedbackScore,
 } from '../repositories/messageRepository';
 
 const MessageBody = Type.Object({
@@ -22,6 +23,14 @@ const MessageBody = Type.Object({
 
 const MessageParams = Type.Object({
   conversationId: Type.String({ format: 'uuid' }),
+});
+
+const FeedbackBody = Type.Object({
+  score: Type.Union([Type.Literal(-1), Type.Literal(1), Type.Null()]),
+});
+
+const FeedbackParams = Type.Object({
+  messageId: Type.String({ format: 'uuid' }),
 });
 
 export const messageRoutes: FastifyPluginAsync = async (fastify) => {
@@ -90,14 +99,6 @@ export const messageRoutes: FastifyPluginAsync = async (fastify) => {
     }
   );
 
-  const FeedbackBody = Type.Object({
-    score: Type.Union([Type.Literal(-1), Type.Literal(1), Type.Null()]),
-  });
-
-  const FeedbackParams = Type.Object({
-    messageId: Type.String({ format: 'uuid' }),
-  });
-
   // PATCH /api/messages/:messageId/feedback
   fastify.patch(
     '/api/messages/:messageId/feedback',
@@ -115,6 +116,10 @@ export const messageRoutes: FastifyPluginAsync = async (fastify) => {
       const user = request.user!;
       const { messageId } = request.params as { messageId: string };
       const { score } = request.body as { score: -1 | 1 | null };
+
+      if (!isValidFeedbackScore(score)) {
+        return reply.status(400).send({ error: 'score must be 1, -1, or null' });
+      }
 
       const msg = await findMessageById(messageId);
       if (!msg) return reply.status(404).send({ error: 'Message not found' });
