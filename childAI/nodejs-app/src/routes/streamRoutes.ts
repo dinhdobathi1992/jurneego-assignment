@@ -94,6 +94,11 @@ export const streamRoutes: FastifyPluginAsync = async (fastify) => {
       const user = request.user!;
       const { conversationId } = request.params;
 
+      // Only learners may regenerate messages. Parents/teachers use guidance endpoints.
+      if (user.role !== 'learner' && user.role !== 'admin' && user.role !== 'service') {
+        return reply.status(403).send({ error: 'Only learners may regenerate messages.' });
+      }
+
       const allowed = await canAccessConversation(conversationId, user.dbId, user.role);
       if (!allowed) return reply.status(403).send({ error: 'Access denied' });
 
@@ -102,6 +107,11 @@ export const streamRoutes: FastifyPluginAsync = async (fastify) => {
         return reply.status(400).send({ error: 'Nothing to regenerate' });
       }
 
+      // Known limitation: this is not atomic with findLatestExchange + canRegenerate.
+      // Two concurrent regenerate requests can both pass the guard and both create a
+      // fresh assistant message. The second's UPDATE is a no-op since status is
+      // already 'regenerated'. Acceptable for v1; revisit with SELECT FOR UPDATE
+      // if duplication shows up in moderation logs.
       // Mark previous assistant as regenerated BEFORE the new stream starts,
       // so concurrent listMessages calls don't see both the old and new.
       await markMessageRegenerated(exchange!.assistant.id);

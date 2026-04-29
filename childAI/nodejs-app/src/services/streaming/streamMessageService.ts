@@ -61,10 +61,18 @@ export async function handleStreamingMessage(params: {
     if (abortSignal.aborted) { sse.close(); return; }
 
     // Save learner message (or re-use existing one for regenerate)
+    // When regenerating, params.content is the original learner message text fetched
+    // upstream by the route. If a future task (edit message) lets learners modify
+    // their question between send and regenerate, the route must pass the EDITED
+    // content as params.content while still passing the original message id as
+    // regenerateFromLearnerMsgId. Don't reach into learnerMsg.content here.
     let learnerMsg: MessageRow;
     if (params.regenerateFromLearnerMsgId) {
       const existing = await findMessageById(params.regenerateFromLearnerMsgId);
       if (!existing || existing.role !== 'learner') {
+        // Surfaces to the SSE client as a generic INTERNAL_ERROR via the outer
+        // try/catch in this function — acceptable since this only fires on race
+        // conditions or DB inconsistency, not normal user paths.
         throw new Error('REGEN_LEARNER_MESSAGE_NOT_FOUND');
       }
       learnerMsg = existing;
