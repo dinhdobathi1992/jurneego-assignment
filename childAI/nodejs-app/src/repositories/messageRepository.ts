@@ -148,8 +148,13 @@ export async function findLatestExchange(
     .selectFrom('messages')
     .selectAll()
     .where('conversation_id', '=', conversationId)
+    // Hide previously-regenerated assistant messages so the lookup returns the
+    // CURRENT exchange, not a stale one. This filter differs from listMessages
+    // (which filters 'cancelled') because the regenerate flow is what creates
+    // the 'regenerated' status in the first place.
     .where('status', '!=', 'regenerated')
     .orderBy('created_at', 'desc')
+    .orderBy('id', 'desc')
     .limit(2)
     .execute();
   if (rows.length < 2) return null;

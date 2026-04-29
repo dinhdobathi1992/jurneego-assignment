@@ -19,5 +19,7 @@ describe('isValidFeedbackScore', () => {
   it('rejects non-numbers', () => {
     expect(isValidFeedbackScore('1' as unknown as number)).toBe(false);
     expect(isValidFeedbackScore(undefined as unknown as number)).toBe(false);
+    expect(isValidFeedbackScore(NaN)).toBe(false);
+    expect(isValidFeedbackScore(Infinity)).toBe(false);
   });
 });
