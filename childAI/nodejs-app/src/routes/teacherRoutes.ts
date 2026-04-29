@@ -23,6 +23,8 @@ import {
   listObjectivesForSession,
 } from '../repositories/learningObjectiveRepository';
 import { guidanceNotesCreatedTotal } from '../services/observability/metrics';
+import { getDb } from '../db/kysely';
+import { getPool } from '../db/pool';
 
 export const teacherRoutes: FastifyPluginAsync = async (fastify) => {
   const teacherGuard = requireRole('teacher', 'admin');
@@ -67,7 +69,7 @@ export const teacherRoutes: FastifyPluginAsync = async (fastify) => {
       const user = request.user!;
       // Virtual classroom — admin sees all users who have at least one conversation
       if (classroomId === '00000000-0000-0000-0000-000000000001') {
-        const db = (await import('../db/kysely')).getDb();
+        const db = getDb();
         const rows = await db
           .selectFrom('users as u')
           .innerJoin('conversations as c', 'c.learner_user_id', 'u.id')
@@ -365,6 +367,143 @@ export const teacherRoutes: FastifyPluginAsync = async (fastify) => {
     async (request, reply) => {
       const { classroomId, userId } = request.params as { classroomId: string; userId: string };
       await removeMemberFromClassroom(classroomId, userId);
+      return reply.status(204).send();
+    }
+  );
+
+  // ── Parent Management ─────────────────────────────────────────────────────
+
+  // GET /api/teacher/students/:studentId/parents
+  fastify.get(
+    '/api/teacher/students/:studentId/parents',
+    {
+      schema: {
+        tags: ['teacher'],
+        summary: 'List linked parents for a student',
+        security: [{ bearerAuth: [] }, { apiKey: [] }],
+        params: Type.Object({ studentId: Type.String({ format: 'uuid' }) }),
+      },
+      preHandler: [authenticate, teacherGuard, rateLimitFor('teacher')],
+    },
+    async (request, reply) => {
+      const { studentId } = request.params as { studentId: string };
+      const db = getDb();
+      const rows = await db
+        .selectFrom('parent_child_links as l')
+        .innerJoin('users as u', 'u.id', 'l.parent_user_id')
+        .select(['l.id as link_id', 'u.id as parent_id', 'u.display_name', 'u.email', 'l.relationship_type'])
+        .where('l.child_user_id', '=', studentId)
+        .where('l.status', '=', 'active')
+        .execute();
+      return reply.send({
+        parents: (rows as any[]).map(r => ({
+          link_id: r.link_id,
+          parent_id: r.parent_id,
+          name: r.display_name?.trim() || r.email?.split('@')[0] || 'Parent',
+          email: r.email ?? null,
+          relationship_type: r.relationship_type,
+        })),
+      });
+    }
+  );
+
+  // POST /api/teacher/students/:studentId/parents
+  fastify.post(
+    '/api/teacher/students/:studentId/parents',
+    {
+      schema: {
+        tags: ['teacher'],
+        summary: 'Link a parent to a student by email',
+        security: [{ bearerAuth: [] }, { apiKey: [] }],
+        params: Type.Object({ studentId: Type.String({ format: 'uuid' }) }),
+        body: Type.Object({
+          email: Type.String({ minLength: 3, maxLength: 200 }),
+        }),
+      },
+      preHandler: [authenticate, teacherGuard, rateLimitFor('teacher')],
+    },
+    async (request, reply) => {
+      const { studentId } = request.params as { studentId: string };
+      const { email } = request.body as { email: string };
+      const normalizedEmail = email.toLowerCase().trim();
+      const db = getDb();
+
+      const parentUser = await db
+        .selectFrom('users')
+        .select(['id', 'primary_role', 'display_name'])
+        .where('email', '=', normalizedEmail)
+        .executeTakeFirst();
+
+      if (!parentUser) {
+        return reply.status(404).send({ error: 'No user found with that email. They must log in at least once first.' });
+      }
+      if (parentUser.primary_role !== 'parent' && parentUser.primary_role !== 'admin') {
+        return reply.status(400).send({ error: `User role is '${parentUser.primary_role}', not 'parent'. Update their role in ROLE_MAP first.` });
+      }
+
+      const childUser = await db
+        .selectFrom('users')
+        .select('id')
+        .where('id', '=', studentId)
+        .executeTakeFirst();
+      if (!childUser) return reply.status(404).send({ error: 'Student not found' });
+
+      const existing = await db
+        .selectFrom('parent_child_links')
+        .select('id')
+        .where('parent_user_id', '=', parentUser.id)
+        .where('child_user_id', '=', studentId)
+        .where('status', '=', 'active')
+        .executeTakeFirst();
+      if (existing) return reply.status(409).send({ error: 'Parent is already linked to this student' });
+
+      const pool = getPool();
+      const inserted = await pool.query(
+        `INSERT INTO parent_child_links (parent_user_id, child_user_id, relationship_type, status, consent_source)
+         VALUES ($1, $2, 'parent', 'active', 'teacher_assigned')
+         RETURNING id`,
+        [parentUser.id, studentId]
+      );
+
+      return reply.status(201).send({
+        link: {
+          link_id: inserted.rows[0].id,
+          parent_id: parentUser.id,
+          name: parentUser.display_name?.trim() || normalizedEmail.split('@')[0],
+          email: normalizedEmail,
+          relationship_type: 'parent',
+        },
+      });
+    }
+  );
+
+  // DELETE /api/teacher/students/:studentId/parents/:parentId
+  fastify.delete(
+    '/api/teacher/students/:studentId/parents/:parentId',
+    {
+      schema: {
+        tags: ['teacher'],
+        summary: 'Remove a parent link from a student',
+        security: [{ bearerAuth: [] }, { apiKey: [] }],
+        params: Type.Object({
+          studentId: Type.String({ format: 'uuid' }),
+          parentId: Type.String({ format: 'uuid' }),
+        }),
+      },
+      preHandler: [authenticate, teacherGuard, rateLimitFor('teacher')],
+    },
+    async (request, reply) => {
+      const { studentId, parentId } = request.params as { studentId: string; parentId: string };
+      const db = getDb();
+      const result = await db
+        .deleteFrom('parent_child_links')
+        .where('child_user_id', '=', studentId)
+        .where('parent_user_id', '=', parentId)
+        .where('status', '=', 'active')
+        .executeTakeFirst();
+      if (!result || Number(result.numDeletedRows) === 0) {
+        return reply.status(404).send({ error: 'Link not found' });
+      }
       return reply.status(204).send();
     }
   );
