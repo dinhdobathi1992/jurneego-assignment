@@ -6,6 +6,7 @@ const displayName = sessionStorage.getItem('display_name') ?? 'Learner';
 const ACTIVE_CONV_KEY = 'active_conv_id';
 let activeConversationId = null;
 let streamCtrl = null;
+let _feedbackCtrl = null;
 let allConversations = [];
 
 function setActiveConv(id) {
@@ -289,38 +290,50 @@ function userMsgHTML(m) {
     </div>`;
 }
 
-async function setMsgFeedback(messageId, score) {
-  try {
-    await api.patch(`/api/messages/${messageId}/feedback`, { score });
-  } catch (err) {
-    console.error('feedback failed', err);
-    showToast('Could not save feedback');
-  }
-}
-
 window._toggleFeedback = async function(btn, messageId, score) {
+  // Cancel any prior in-flight feedback PATCH so a stale response can't
+  // overwrite the latest user choice on the server.
+  if (_feedbackCtrl) _feedbackCtrl.abort();
+  _feedbackCtrl = new AbortController();
+  const ctrl = _feedbackCtrl;
+
   const wasActive = btn.dataset.active === 'true';
   const newScore = wasActive ? null : score;
+
   // optimistic: clear all feedback buttons for this message, then highlight if new score
   document.querySelectorAll(`[data-msg-id="${messageId}"]`).forEach(b => {
     b.dataset.active = 'false';
+    b.setAttribute('aria-pressed', 'false');
     b.classList.remove('text-[#0A3D3C]', 'bg-[#DAF0EE]', 'text-[#EE6742]', 'bg-[#FFE5DD]');
     b.classList.add('text-gray-400');
   });
   if (newScore !== null) {
     btn.dataset.active = 'true';
+    btn.setAttribute('aria-pressed', 'true');
     btn.classList.remove('text-gray-400');
     if (newScore === 1) {
       btn.classList.add('text-[#0A3D3C]', 'bg-[#DAF0EE]');
     } else {
       btn.classList.add('text-[#EE6742]', 'bg-[#FFE5DD]');
     }
+  } else {
+    btn.setAttribute('aria-pressed', 'false');
   }
-  await setMsgFeedback(messageId, newScore);
+
+  try {
+    await api.patch(`/api/messages/${messageId}/feedback`, { score: newScore }, { signal: ctrl.signal });
+  } catch (err) {
+    if (err.name === 'AbortError') return;
+    console.error('feedback failed', err);
+    showToast('Could not save feedback');
+  } finally {
+    if (_feedbackCtrl === ctrl) _feedbackCtrl = null;
+  }
 };
 
 function aiMsgHTML(m) {
   const safe = m.is_safe !== false;
+  const ts = formatMsgTime(m.created_at);
   return `
     <div class="ai-msg-group flex gap-3 mb-7">
       <div class="flex-shrink-0 w-8 h-8 rounded-full bg-[#DAF0EE] flex items-center justify-center mt-0.5 shadow-sm">
@@ -341,18 +354,20 @@ function aiMsgHTML(m) {
             </p>` : ''}
         </div>
         <div class="flex items-center gap-2 mt-2 ml-1">
-          ${formatMsgTime(m.created_at) ? `<span class="text-[11px] text-gray-400 font-inter">${formatMsgTime(m.created_at)}</span>` : ''}
+          ${ts ? `<span class="text-[11px] text-gray-400 font-inter">${ts}</span>` : ''}
           <div class="ai-actions flex items-center gap-1">
           ${m.id ? `
-            <button onclick="window._toggleFeedback(this, '${m.id}', 1)"
-                    data-msg-id="${m.id}" data-active="${m.feedback_score === 1}"
+            <button onclick="window._toggleFeedback(this, '${escAttr(m.id)}', 1)"
+                    data-msg-id="${escAttr(m.id)}" data-active="${m.feedback_score === 1}"
+                    aria-label="Helpful" aria-pressed="${m.feedback_score === 1}"
                     class="${m.feedback_score === 1 ? 'text-[#0A3D3C] bg-[#DAF0EE]' : 'text-gray-400'} hover:text-[#0A3D3C] hover:bg-[#DAF0EE] p-1.5 rounded-lg cursor-pointer transition-colors" title="Helpful">
               <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M6.633 10.5c.806 0 1.533-.446 2.031-1.08a9.041 9.041 0 0 1 2.861-2.4c.723-.384 1.35-.956 1.653-1.715a4.498 4.498 0 0 0 .322-1.672V2.75a.75.75 0 0 1 .75-.75 2.25 2.25 0 0 1 2.25 2.25c0 1.152-.26 2.243-.723 3.218-.266.558.107 1.282.725 1.282m0 0h3.126c1.026 0 1.945.694 2.054 1.715.045.422.068.85.068 1.285a11.95 11.95 0 0 1-2.649 7.521c-.388.482-.987.729-1.605.729H13.48c-.483 0-.964-.078-1.423-.23l-3.114-1.04a4.501 4.501 0 0 0-1.423-.23H5.904m10.598-9.75H14.25M5.904 18.5c.083.205.173.405.27.602.197.4-.078.898-.523.898h-.908c-.889 0-1.713-.518-1.972-1.368a12 12 0 0 1-.521-3.507c0-1.553.295-3.036.831-4.398C3.387 9.953 4.167 9.5 5 9.5h1.053c.472 0 .745.556.5.96a8.958 8.958 0 0 0-1.302 4.665c0 1.194.232 2.333.654 3.375Z" />
               </svg>
             </button>
-            <button onclick="window._toggleFeedback(this, '${m.id}', -1)"
-                    data-msg-id="${m.id}" data-active="${m.feedback_score === -1}"
+            <button onclick="window._toggleFeedback(this, '${escAttr(m.id)}', -1)"
+                    data-msg-id="${escAttr(m.id)}" data-active="${m.feedback_score === -1}"
+                    aria-label="Not helpful" aria-pressed="${m.feedback_score === -1}"
                     class="${m.feedback_score === -1 ? 'text-[#EE6742] bg-[#FFE5DD]' : 'text-gray-400'} hover:text-[#EE6742] hover:bg-[#FFE5DD] p-1.5 rounded-lg cursor-pointer transition-colors" title="Not helpful">
               <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 15h2.25m8.024-9.75c.011.05.028.1.052.148.591 1.2.924 2.55.924 3.977a8.96 8.96 0 0 1-.999 4.125m.023-8.25c-.076-.365.183-.75.575-.75h.908c.889 0 1.713.518 1.972 1.368.339 1.11.521 2.287.521 3.507 0 1.553-.295 3.036-.831 4.398-.306.774-1.086 1.227-1.918 1.227h-1.053c-.472 0-.745-.556-.5-.96a8.95 8.95 0 0 0 .303-.54m.023-8.25H16.48a4.5 4.5 0 0 1 1.423.23l3.114 1.04a4.5 4.5 0 0 0 1.423.23h1.294M14.25 9h-3.027c-.808 0-1.535.446-2.033 1.08a9.039 9.039 0 0 1-2.861 2.4c-.723.384-1.35.956-1.653 1.715a4.499 4.499 0 0 0-.322 1.672v.633a2.25 2.25 0 0 0 2.25 2.25.75.75 0 0 0 .75-.75v-.182c0-.866.385-1.65 1.03-2.193 1.617-1.359 2.667-3.16 2.844-5.124M14.25 9V5.25c0-1.5-.75-2.25-2.25-2.25l-1.5 4.5L9 9h5.25Z" />
