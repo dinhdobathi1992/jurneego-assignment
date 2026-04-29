@@ -83,6 +83,17 @@ export const onyxCompatRoutes: FastifyPluginAsync = async (fastify) => {
     };
   });
 
+  /**
+   * Onyx fires POST /api/auth/refresh on a timer (useTokenRefresh hook).
+   * Real Onyx rotates a JWT here; for our shim the cookie-bridge already
+   * carries a fresh JWT, so we just acknowledge with 200 — anything else
+   * triggers Onyx's onRefreshFail() which logs the user out.
+   */
+  fastify.post('/api/auth/refresh', async () => ({ refreshed: true }));
+
+  /** Best-effort no-op so Onyx's signout flow doesn't error. */
+  fastify.post('/api/auth/logout', async (_request, reply) => reply.status(204).send());
+
   fastify.get('/api/settings', async () => ({
     anonymous_user_enabled: true,
     anonymous_user_path: null,
