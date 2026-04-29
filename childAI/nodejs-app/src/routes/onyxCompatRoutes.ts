@@ -230,7 +230,7 @@ export const onyxCompatRoutes: FastifyPluginAsync = async (fastify) => {
       const body = request.body ?? {};
       const conv = await createNewConversation({
         learnerUserId: user.dbId,
-        title: body.description?.slice(0, 200),
+        title: body.description?.slice(0, 255), // matches conversations.title varchar(255)
       });
       return { chat_session_id: conv.id };
     }
