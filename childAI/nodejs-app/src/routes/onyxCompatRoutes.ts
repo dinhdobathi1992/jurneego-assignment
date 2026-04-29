@@ -2,7 +2,7 @@ import { FastifyPluginAsync } from 'fastify';
 import { OnyxAuthType, OnyxUser } from '../services/onyxShapes';
 import { authenticate } from '../middleware/authMiddleware';
 import { canAccessConversation } from '../auth/ownership';
-import { getConversation, listLearnerConversations } from '../services/conversationService';
+import { listLearnerConversations, getConversation, createNewConversation } from '../services/conversationService';
 import { toOnyxSession, toOnyxMessages } from '../services/onyxShapes';
 
 /**
@@ -218,6 +218,42 @@ export const onyxCompatRoutes: FastifyPluginAsync = async (fastify) => {
         shared_status: 'private',
         current_folder_id: null,
       };
+    }
+  );
+
+  // ── Chat sessions: create ─────────────────────────────────────────────────
+  fastify.post<{ Body: { persona_id?: number; description?: string; project_id?: number | null } }>(
+    '/api/chat/create-chat-session',
+    { preHandler: [authenticate] },
+    async (request) => {
+      const user = request.user!;
+      const body = request.body ?? {};
+      const conv = await createNewConversation({
+        learnerUserId: user.dbId,
+        title: body.description?.slice(0, 200),
+      });
+      return { chat_session_id: conv.id };
+    }
+  );
+
+  // ── Chat sessions: rename / delete (best-effort) ──────────────────────────
+  fastify.put<{ Body: { chat_session_id: string; name: string } }>(
+    '/api/chat/rename-chat-session',
+    { preHandler: [authenticate] },
+    async (request, reply) => {
+      // Our backend doesn't currently expose a rename endpoint. For the demo
+      // we accept the call and no-op so the UI doesn't show an error.
+      void request.body;
+      return reply.status(204).send();
+    }
+  );
+
+  fastify.delete<{ Params: { sessionId: string } }>(
+    '/api/chat/delete-chat-session/:sessionId',
+    { preHandler: [authenticate] },
+    async (_request, reply) => {
+      // Same: no-op for now. A future task can wire this to a real delete.
+      return reply.status(204).send();
     }
   );
 };
