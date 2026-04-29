@@ -1,0 +1,16 @@
+--- /tmp/onyx-route-original.ts	2026-04-29 13:26:39
++++ /Users/thi/Devops/JurneeGo_Assignment/childAI/onyx-web/src/app/api/[...path]/route.ts	2026-04-29 13:26:49
+@@ -103,6 +103,13 @@
+       );
+     }
+ 
++    // childAI bridge: translate our app_token cookie into a Bearer header so
++    // the Fastify backend's authenticate middleware accepts the request.
++    const appToken = request.cookies.get("app_token")?.value;
++    if (appToken && !headers.has("authorization")) {
++      headers.set("authorization", `Bearer ${appToken}`);
++    }
++
+     const response = await fetch(backendUrl, {
+       method: request.method,
+       headers: headers,
