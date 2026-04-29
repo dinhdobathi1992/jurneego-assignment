@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import Fastify, { FastifyInstance } from 'fastify';
 import { onyxCompatRoutes } from '../../src/routes/onyxCompatRoutes';
+import { toOnyxSession } from '../../src/services/onyxShapes';
 
 let app: FastifyInstance;
 
@@ -106,5 +107,32 @@ describe('onyxCompatRoutes — feature stubs', () => {
   it('GET /api/manage/document-set returns empty array', async () => {
     const res = await app.inject({ method: 'GET', url: '/api/manage/document-set' });
     expect(res.json()).toEqual([]);
+  });
+});
+
+describe('toOnyxSession', () => {
+  it('maps our conversation to Onyx session shape with flagged carry-through', () => {
+    const out = toOnyxSession({
+      id: '11111111-1111-1111-1111-111111111111',
+      title: 'About dragons',
+      created_at: '2026-04-01T10:00:00.000Z',
+      updated_at: '2026-04-02T10:00:00.000Z',
+      is_flagged: true,
+    });
+    expect(out.id).toBe('11111111-1111-1111-1111-111111111111');
+    expect(out.name).toBe('About dragons');
+    expect(out.persona_id).toBe(0);
+    expect(out.time_created).toBe('2026-04-01T10:00:00.000Z');
+    expect(out.is_flagged).toBe(true);
+  });
+
+  it('falls back to a slug when title is null', () => {
+    const out = toOnyxSession({
+      id: 'abcdef12-1111-1111-1111-111111111111',
+      title: null,
+      created_at: '2026-04-01T10:00:00.000Z',
+    });
+    expect(out.name).toBe('Chat abcdef');
+    expect(out.is_flagged).toBe(false);
   });
 });

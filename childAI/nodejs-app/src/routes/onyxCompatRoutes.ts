@@ -1,5 +1,8 @@
 import { FastifyPluginAsync } from 'fastify';
 import { OnyxAuthType, OnyxUser } from '../services/onyxShapes';
+import { authenticate } from '../middleware/authMiddleware';
+import { listLearnerConversations } from '../services/conversationService';
+import { toOnyxSession } from '../services/onyxShapes';
 
 /**
  * Compatibility shim for the upstream Onyx frontend.
@@ -164,4 +167,11 @@ export const onyxCompatRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get('/api/manage/connector', async () => ([]));
   fastify.get('/api/manage/document-set', async () => ([]));
   fastify.get('/api/federated', async () => ([]));
+
+  // ── Chat sessions: list ───────────────────────────────────────────────────
+  fastify.get('/api/chat/get-user-chat-sessions', { preHandler: [authenticate] }, async (request) => {
+    const user = request.user!;
+    const conversations = await listLearnerConversations(user.dbId, 50);
+    return { sessions: conversations.map(toOnyxSession) };
+  });
 };
