@@ -88,10 +88,11 @@ describe('onyxCompatRoutes — feature stubs', () => {
     expect(res.json()).toEqual([]);
   });
 
-  it('GET /api/notifications returns empty list shape', async () => {
+  it('GET /api/notifications returns a flat empty array', async () => {
+    // Onyx's useNotifications hook does `data ?? []` then `.filter(...)`,
+    // so the response must be Notification[] — NOT `{ notifications: [] }`.
     const res = await app.inject({ method: 'GET', url: '/api/notifications' });
-    const body = res.json();
-    expect(body).toEqual({ notifications: [] });
+    expect(res.json()).toEqual([]);
   });
 
   it('GET /api/user/assistant/preferences returns empty preferences', async () => {

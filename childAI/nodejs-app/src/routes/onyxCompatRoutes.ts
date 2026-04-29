@@ -194,7 +194,9 @@ export const onyxCompatRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get('/api/user/projects', async () => ([]));
 
   // ── Notifications ─────────────────────────────────────────────────────────
-  fastify.get('/api/notifications', async () => ({ notifications: [] }));
+  // Onyx's useNotifications hook does `data ?? []` then `.filter(...)`, so
+  // the response must be a flat array — NOT `{ notifications: [] }`.
+  fastify.get('/api/notifications', async () => ([]));
 
   // ── Assistant preferences ─────────────────────────────────────────────────
   fastify.get('/api/user/assistant/preferences', async () => ({
@@ -208,9 +210,33 @@ export const onyxCompatRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get('/api/manage/connector-status', async () => ([]));
   fastify.get('/api/manage/document-set', async () => ([]));
   fastify.get('/api/federated', async () => ([]));
+  fastify.get('/api/build/connectors', async () => ([]));
+  fastify.get('/api/build/user-library/tree', async () => ([]));
 
-  // ── Enterprise extras (chat page expects these to 200) ────────────────────
+  // ── Enterprise / licensing extras ─────────────────────────────────────────
   fastify.get('/api/enterprise-settings/custom-analytics-script', async () => null);
+  fastify.get('/api/license', async () => ({
+    license: null,
+    is_valid: true,
+    is_expired: false,
+    expiration_date: null,
+  }));
+
+  // ── Tools / prompts / search settings ─────────────────────────────────────
+  fastify.get('/api/tool', async () => ([]));
+  fastify.get('/api/tool/openapi', async () => ([]));
+  fastify.get('/api/input_prompt', async () => ([]));
+  fastify.get('/api/mcp/servers', async () => ([]));
+  fastify.get('/api/query/valid-tags', async () => ({ tags: [] }));
+  fastify.get('/api/search-settings/get-current-search-settings', async () => null);
+  fastify.get('/api/search-settings/get-secondary-search-settings', async () => null);
+  fastify.get('/api/search-settings/unstructured-api-key-set', async () => false);
+
+  // ── User extras (files, PATs, OAuth status, voice) ───────────────────────
+  fastify.get('/api/user/files/recent', async () => ([]));
+  fastify.get('/api/user/pats', async () => ([]));
+  fastify.get('/api/user-oauth-token/status', async () => ({}));
+  fastify.get('/api/voice/status', async () => ({ voice_enabled: false }));
 
   // ── Chat sessions: list ───────────────────────────────────────────────────
   fastify.get('/api/chat/get-user-chat-sessions', { preHandler: [authenticate] }, async (request) => {
