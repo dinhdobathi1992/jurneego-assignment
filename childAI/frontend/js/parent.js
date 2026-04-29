@@ -53,6 +53,8 @@ async function loadChildren() {
           <p class="text-sm text-gray-500 font-inter">No children linked.</p>
           <p class="text-xs text-gray-400 mt-1 font-inter">Ask your administrator to link your account.</p>
         </div>`;
+      const pill = document.getElementById('selected-child-pill');
+      if (pill) { pill.classList.add('hidden'); pill.classList.remove('flex'); }
       return;
     }
 
@@ -82,6 +84,8 @@ async function loadChildren() {
     }
   } catch (err) {
     list.innerHTML = '<p class="text-xs text-[#EE6742] px-3 py-2">Failed to load children</p>';
+    const pill = document.getElementById('selected-child-pill');
+    if (pill) { pill.classList.add('hidden'); pill.classList.remove('flex'); }
     console.error(err);
   }
 }
@@ -164,6 +168,7 @@ async function loadConversations(childId) {
 
   try {
     const data  = await api.get(`/api/parent/children/${childId}/conversations?limit=30`);
+    if (selectedChildId !== childId) return;
     const convs = data?.conversations ?? [];
     allConversations = convs;
 
@@ -196,6 +201,7 @@ async function loadConversations(childId) {
         </button>`;
     }).join('');
   } catch (err) {
+    allConversations = [];
     list.innerHTML = '<p class="text-xs text-[#EE6742] px-3 py-2">Failed to load</p>';
     console.error(err);
   }
@@ -343,6 +349,7 @@ async function loadSessions(childId) {
 
   try {
     const data     = await api.get(`/api/parent/children/${childId}/sessions`);
+    if (selectedChildId !== childId) return;
     const sessions = data?.sessions ?? [];
 
     if (!sessions.length) {
@@ -451,6 +458,7 @@ window._loadSessionGuidance = async function(sessionId, title, btn) {
 async function updateSafetyBadge(childId) {
   try {
     const data  = await api.get(`/api/parent/children/${childId}/conversations?limit=50`);
+    if (selectedChildId !== childId) return;
     const convs = data?.conversations ?? [];
     allConversations = convs;
     const count = convs.filter(c => c.is_flagged).length;
