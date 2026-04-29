@@ -21,7 +21,9 @@ from the diff paths.)
 
 ## Patches
 
-- `01-auth-bridge.patch` — two related modifications to the catch-all proxy:
+- `01-auth-bridge.patch` — three related modifications. Affects two files:
+
+  **`web/src/app/api/[...path]/route.ts`** (catch-all proxy for client-side `/api/*` calls):
     1. Preserves the `/api/` prefix when forwarding to the upstream URL.
        Onyx's Python backend serves routes at root (no prefix), but our Fastify
        keeps `/api/` on every route, so the proxy must forward `/api/me` to
@@ -30,3 +32,10 @@ from the diff paths.)
        into an `Authorization: Bearer <jwt>` header on the Next.js → Fastify
        proxy hop. Without this, the Onyx UI loads as the anonymous user
        instead of the signed-in learner.
+
+  **`web/src/lib/utilsSS.ts`** (server-side fetch helper used by SSR pages):
+    3. Same `/api/` prefix preservation as #1, but for the SSR code path.
+       `getAuthTypeMetadataSS()` and `getCurrentUserSS()` use `buildUrl(path)`
+       which bypasses the catch-all proxy and calls Fastify directly. Without
+       this, the login page SSR fetch fails and the page errors before
+       rendering.
