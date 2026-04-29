@@ -15,6 +15,9 @@ export async function init() {
   document.getElementById('user-name').textContent = displayName;
   const avatar = document.getElementById('user-avatar');
   if (avatar && displayName) avatar.textContent = displayName[0].toUpperCase();
+  const emailEl = document.getElementById('user-email');
+  const userEmail = sessionStorage.getItem('user_email') ?? '';
+  if (emailEl && userEmail) emailEl.textContent = userEmail;
 
   document.getElementById('logout-btn').addEventListener('click', () => {
     clearTokens();
