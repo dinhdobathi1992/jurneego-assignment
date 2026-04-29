@@ -178,8 +178,12 @@ export const onyxCompatRoutes: FastifyPluginAsync = async (fastify) => {
 
   // ── Connectors / document sets (empty for chat-only mode) ────────────────
   fastify.get('/api/manage/connector', async () => ([]));
+  fastify.get('/api/manage/connector-status', async () => ([]));
   fastify.get('/api/manage/document-set', async () => ([]));
   fastify.get('/api/federated', async () => ([]));
+
+  // ── Enterprise extras (chat page expects these to 200) ────────────────────
+  fastify.get('/api/enterprise-settings/custom-analytics-script', async () => null);
 
   // ── Chat sessions: list ───────────────────────────────────────────────────
   fastify.get('/api/chat/get-user-chat-sessions', { preHandler: [authenticate] }, async (request) => {

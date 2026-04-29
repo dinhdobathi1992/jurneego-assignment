@@ -39,10 +39,18 @@
         return;
       }
 
-      // Drop the JWT into a cookie that the Onyx Next.js proxy can read.
-      // Path=/ so it covers /api/* on port 3002.
-      // Max-Age 8h ~ a typical session length.
+      // Two cookies:
+      //  app_token=<jwt>             — read by our patched Onyx proxy and
+      //                                 translated into Authorization: Bearer
+      //                                 on the upstream call to Fastify
+      //  fastapiusersauth=via-childai — presence-marker so Onyx's edge
+      //                                 middleware (proxy.ts) doesn't redirect
+      //                                 us to /auth/login. The value isn't
+      //                                 used for anything; only its presence
+      //                                 matters.
+      // Path=/ so they cover /api/* and /app on port 3002. Max-Age 8h.
       document.cookie = `app_token=${token}; path=/; max-age=28800; SameSite=Lax`;
+      document.cookie = `fastapiusersauth=via-childai; path=/; max-age=28800; SameSite=Lax`;
 
       status.textContent = 'Redirecting…';
       // Small delay so the cookie is committed before navigation.
