@@ -33,6 +33,14 @@ export async function init() {
   document.getElementById('new-chat-btn').addEventListener('click', startNewChat);
   document.getElementById('send-btn').addEventListener('click', () => sendMessage('msg-input'));
   document.getElementById('welcome-send-btn').addEventListener('click', sendFromWelcome);
+  document.getElementById('stop-btn').addEventListener('click', () => {
+    if (streamCtrl) {
+      streamCtrl.abort();
+      // streamCtrl will be cleared by the stream's `error` callback (which fires
+      // on abort) or `done` callback. Until then, leave it set so a second click
+      // is a no-op.
+    }
+  });
 
   // Enter to send
   document.getElementById('msg-input').addEventListener('keydown', (e) => {
@@ -428,6 +436,8 @@ async function sendMessage(inputId) {
   input.value = '';
   input.style.height = 'auto';
   document.getElementById('send-btn').disabled = true;
+  document.getElementById('send-btn').classList.add('hidden');
+  document.getElementById('stop-btn').classList.remove('hidden');
 
   const container = document.getElementById('messages');
   // If empty state placeholder, clear it
@@ -483,6 +493,8 @@ async function sendMessage(inputId) {
       done: () => {
         document.getElementById(`${streamId}-dots`)?.remove();
         document.getElementById('send-btn')?.removeAttribute('disabled');
+        document.getElementById('send-btn')?.classList.remove('hidden');
+        document.getElementById('stop-btn')?.classList.add('hidden');
         reloadMessages(streamId, accumulated);
         loadConversations();
         // Auto-title runs server-side as fire-and-forget; the LLM call can
@@ -494,6 +506,8 @@ async function sendMessage(inputId) {
         console.error('[chatter] stream error:', err);
         document.getElementById(`${streamId}-dots`)?.remove();
         document.getElementById('send-btn')?.removeAttribute('disabled');
+        document.getElementById('send-btn')?.classList.remove('hidden');
+        document.getElementById('stop-btn')?.classList.add('hidden');
         reloadMessages(streamId, accumulated);
       },
     }

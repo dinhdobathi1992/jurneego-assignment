@@ -256,6 +256,12 @@
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 19.5v-15m0 0-6.75 6.75M12 4.5l6.75 6.75" />
               </svg>
             </button>
+            <button id="stop-btn" type="button"
+                    class="hidden flex-shrink-0 w-9 h-9 rounded-full bg-[#EE6742] hover:bg-[#d65a39] text-white flex items-center justify-center cursor-pointer transition-colors" title="Stop" aria-label="Stop generating">
+              <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                <rect x="5" y="5" width="10" height="10" rx="1.5"/>
+              </svg>
+            </button>
           </div>
         </div>
         <p class="text-center text-[11px] text-gray-400 mt-2">
@@ -271,7 +277,7 @@
   </div>
 
   <script type="module">
-    import { init } from './js/chatter.js?v=5';
+    import { init } from './js/chatter.js?v=6';
     import { routeByRole } from './js/auth.js';
 
     const token = sessionStorage.getItem('app_token');
