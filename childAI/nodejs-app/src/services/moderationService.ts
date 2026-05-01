@@ -5,6 +5,7 @@ import { createAuditEvent } from '../repositories/auditRepository';
 import { isAssignedTeacher } from '../auth/ownership';
 import { getDb } from '../db/kysely';
 import { FlagRow } from '../repositories/flagRepository';
+import { resolveName } from '../utils/nameUtils';
 
 export interface EnrichedFlag extends FlagRow {
   learner_name: string | null;
@@ -28,7 +29,7 @@ async function enrichFlags(flags: FlagRow[]): Promise<EnrichedFlag[]> {
   const [convRows, msgRows] = await Promise.all([
     db.selectFrom('conversations as c')
       .innerJoin('users as u', 'u.id', 'c.learner_user_id')
-      .select(['c.id', 'c.title', 'u.display_name', 'u.external_subject'])
+      .select(['c.id', 'c.title', 'u.display_name', 'u.external_subject', 'u.email'])
       .where('c.id', 'in', convIds)
       .execute(),
     msgIds.length
@@ -44,7 +45,7 @@ async function enrichFlags(flags: FlagRow[]): Promise<EnrichedFlag[]> {
     const msg  = msgMap.get(f.message_id);
     return {
       ...f,
-      learner_name: (() => { const d = (conv as any)?.display_name?.trim(); const s = String((conv as any)?.external_subject ?? ''); return d || (/^\d+$/.test(s) ? null : s.slice(0, 20)) || null; })(),
+      learner_name: conv ? resolveName((conv as any).display_name, (conv as any).external_subject, (conv as any).email) : null,
       conversation_title: conv?.title ?? null,
       flagged_message_preview: msg?.content ? String(msg.content).slice(0, 80) : null,
     };

@@ -1,2 +1,5 @@
 # Claude Code local backend config (contains credentials)
 .claude/settings.local.json
+
+# Onyx reference clone (read-only, for feature research)
+onyx-reference/

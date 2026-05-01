@@ -28,6 +28,11 @@ export async function init() {
   document.getElementById('tab-moderation').addEventListener('click', () => switchTab('moderation'));
 
   await Promise.all([loadClassrooms(), loadFlaggedCount()]);
+
+  // Restore tab from URL hash (survives refresh)
+  const validTabs = ['students', 'classrooms', 'moderation'];
+  const hashTab = location.hash.replace('#', '');
+  switchTab(validTabs.includes(hashTab) ? hashTab : 'students');
 }
 
 // ─── Classrooms & Students ───────────────────────────────────────────────────
@@ -178,21 +183,44 @@ window._loadStudentConv = async function(convId, btn) {
 function teacherMsgHTML(m) {
   const isLearner = m.role === 'learner';
   const unsafe    = m.is_safe === false;
-  return `
-    <div class="flex ${isLearner ? 'justify-end' : 'justify-start'} mb-3 px-1">
-      <div class="max-w-[75%] ${isLearner
-        ? 'bg-[#0A3D3C] text-white rounded-2xl rounded-br-sm'
-        : 'bg-white border border-[#DAF0EE] text-[#1A1A1A] rounded-2xl rounded-bl-sm shadow-sm'
-      } px-4 py-3 text-sm font-inter leading-relaxed">
-        ${escHtml(m.content)}
-        ${unsafe ? `<p class="text-[10px] text-[#EE6742] mt-1.5 font-semibold flex items-center gap-1">
-          <svg class="w-3 h-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495ZM10 5a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 10 5Zm0 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clip-rule="evenodd"/>
-          </svg>
-          Safety flag
-        </p>` : ''}
-      </div>
+  const flagEl    = unsafe ? `<p class="text-[10px] text-[#EE6742] mt-1.5 font-semibold flex items-center gap-1">
+    <svg class="w-3 h-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+      <path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495ZM10 5a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 10 5Zm0 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clip-rule="evenodd"/>
+    </svg>
+    Safety flag
+  </p>` : '';
+
+  const bubbliAvatar = `
+    <div class="flex-shrink-0 w-8 h-8 rounded-full bg-[#DAF0EE] flex items-center justify-center">
+      <svg class="w-4 h-4 text-[#0A3D3C]" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 0 1-2.555-.337A5.972 5.972 0 0 1 5.41 20.97a5.969 5.969 0 0 1-.474-.065 4.48 4.48 0 0 0 .978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25Z" />
+      </svg>
     </div>`;
+
+  if (isLearner) {
+    return `
+      <div class="flex justify-end items-end gap-2 mb-4 px-4">
+        <div class="max-w-[72%] bg-[#0A3D3C] text-white rounded-2xl rounded-br-sm px-4 py-3 text-sm font-inter leading-relaxed">
+          ${escHtml(m.content)}
+          ${unsafe ? `<p class="text-[10px] text-[#DAF0EE]/70 mt-1.5 font-semibold flex items-center gap-1">
+            <svg class="w-3 h-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495ZM10 5a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 10 5Zm0 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clip-rule="evenodd"/>
+            </svg>
+            Safety flag
+          </p>` : ''}
+        </div>
+        <div class="flex-shrink-0 w-8 h-8 rounded-full bg-[#E3F2FD] flex items-center justify-center text-[#3b82f6] text-xs font-bold">L</div>
+      </div>`;
+  } else {
+    return `
+      <div class="flex justify-start items-end gap-2 mb-4 px-4">
+        ${bubbliAvatar}
+        <div class="max-w-[72%] bg-white border border-[#DAF0EE] text-[#1A1A1A] rounded-2xl rounded-bl-sm shadow-sm px-4 py-3 text-sm font-inter leading-relaxed">
+          ${escHtml(m.content)}
+          ${flagEl}
+        </div>
+      </div>`;
+  }
 }
 
 // ─── Moderation ───────────────────────────────────────────────────────────────
@@ -220,55 +248,77 @@ async function loadFlaggedCount() {
 }
 
 function renderModerationTable(flags) {
-  const tbody = document.getElementById('flag-table-body');
+  const container = document.getElementById('flag-table-body');
   if (!flags.length) {
-    tbody.innerHTML = `
-      <tr>
-        <td colspan="5" class="px-4 py-8 text-center text-sm text-gray-400">No flags found</td>
-      </tr>`;
+    container.innerHTML = `
+      <div class="flex flex-col items-center justify-center py-16 text-center select-none">
+        <div class="w-14 h-14 bg-[#DAF0EE] rounded-2xl flex items-center justify-center mb-4">
+          <svg class="w-7 h-7 text-[#0A3D3C]" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
+          </svg>
+        </div>
+        <p class="text-[#0A3D3C] font-jakarta font-semibold">All clear!</p>
+        <p class="text-gray-400 text-sm mt-1">No safety flags to review.</p>
+      </div>`;
     return;
   }
 
-  tbody.innerHTML = flags.map(f => {
+  container.innerHTML = flags.map(f => {
     const learnerName = f.learner_name ?? ('Learner ' + String(f.conversation_id).slice(0, 6));
     const convTitle   = f.conversation_title ?? ('Chat ' + String(f.conversation_id).slice(0, 6));
     const preview     = f.flagged_message_preview;
+    const initial     = learnerName[0].toUpperCase();
+    const flagType    = (f.flag_type ?? '').replace(/_/g, ' ');
 
-    const severityPill = severityHTML(f.severity);
-    const statusPill   = f.reviewed
-      ? '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-500">Reviewed</span>'
-      : '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#FFF0E8] text-[#EE6742]">Pending</span>';
+    const sev = (f.severity ?? '').toLowerCase();
+    const stripColor  = sev === 'high' ? 'bg-red-500' : sev === 'medium' ? 'bg-orange-400' : sev === 'low' ? 'bg-yellow-400' : 'bg-gray-300';
+    const avatarColor = sev === 'high' ? 'bg-red-100 text-red-700' : sev === 'medium' ? 'bg-orange-100 text-orange-700' : 'bg-[#E3F2FD] text-[#3b82f6]';
 
-    const viewBtn = `<button
-      class="text-xs font-semibold font-inter text-[#0A3D3C] border border-[#0A3D3C] hover:bg-[#DAF0EE] rounded-full px-3 py-1.5 cursor-pointer transition-colors duration-150 mr-1.5"
-      onclick="window._openConvViewer('${escHtml(String(f.conversation_id))}', '${escHtml(learnerName)}', '${escHtml(convTitle)}')">
-      View
-    </button>`;
+    const statusHTML = f.reviewed
+      ? '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-gray-100 text-gray-500">Reviewed</span>'
+      : '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#FFF0E8] text-[#EE6742]">Pending</span>';
 
-    const actionBtn = !f.reviewed
-      ? `<div class="flex items-center gap-1 flex-wrap">
-           ${viewBtn}
-           <button
-             data-flag-id="${escHtml(String(f.id))}"
-             class="review-btn text-xs font-semibold font-jakarta text-white bg-[#0A3D3C] hover:bg-[#072e2d] rounded-full px-3 py-1.5 cursor-pointer transition-colors duration-150"
-             onclick="window._reviewFlag('${escHtml(String(f.id))}', this)">
-             Mark Reviewed
-           </button>
-         </div>`
-      : `<div class="flex items-center gap-1">${viewBtn}<span class="text-xs text-gray-300">Reviewed</span></div>`;
+    const viewBtn = `
+      <button
+        class="text-xs font-semibold font-inter text-[#0A3D3C] border border-[#DAF0EE] hover:bg-[#DAF0EE] rounded-xl px-3 py-1.5 cursor-pointer transition-colors"
+        onclick="window._openConvViewer('${escHtml(String(f.conversation_id))}', '${escHtml(learnerName)}', '${escHtml(convTitle)}')">
+        View Chat
+      </button>`;
+
+    const reviewBtn = !f.reviewed
+      ? `<button
+           data-flag-id="${escHtml(String(f.id))}"
+           class="review-btn text-xs font-semibold font-jakarta text-white bg-[#0A3D3C] hover:bg-[#072e2d] rounded-xl px-3 py-1.5 cursor-pointer transition-colors"
+           onclick="window._reviewFlag('${escHtml(String(f.id))}', this)">
+           Mark Reviewed
+         </button>`
+      : '';
 
     return `
-      <tr class="border-b border-[#DAF0EE] hover:bg-[#F2FBF9] transition-colors" data-flag-row="${escHtml(String(f.id))}">
-        <td class="px-4 py-3">
-          <p class="text-sm font-semibold text-[#0A3D3C] font-jakarta">${escHtml(learnerName)}</p>
-          <p class="text-xs text-gray-400 mt-0.5">${escHtml(convTitle)}</p>
-          ${preview ? `<p class="text-xs text-gray-500 mt-1 italic truncate max-w-[200px]">"${escHtml(preview)}"</p>` : ''}
-        </td>
-        <td class="px-4 py-3 text-sm text-[#374151]">${escHtml((f.flag_type ?? '—').replace(/_/g, ' '))}</td>
-        <td class="px-4 py-3">${severityPill}</td>
-        <td class="px-4 py-3">${statusPill}</td>
-        <td class="px-4 py-3">${actionBtn}</td>
-      </tr>`;
+      <div class="bg-white rounded-2xl border border-[#DAF0EE] shadow-sm overflow-hidden flex" data-flag-card="${escHtml(String(f.id))}">
+        <div class="w-1.5 flex-shrink-0 ${stripColor}"></div>
+        <div class="flex-1 px-4 py-4 min-w-0">
+          <div class="flex items-start gap-3">
+            <div class="flex-shrink-0 w-10 h-10 rounded-full ${avatarColor} flex items-center justify-center text-sm font-bold font-jakarta">
+              ${escHtml(initial)}
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 flex-wrap mb-0.5">
+                <p class="text-sm font-semibold font-jakarta text-[#0A3D3C]">${escHtml(learnerName)}</p>
+                ${severityHTML(f.severity)}
+                <span data-flag-status="${escHtml(String(f.id))}">${statusHTML}</span>
+              </div>
+              <p class="text-xs text-gray-400 truncate">${escHtml(convTitle)}</p>
+              ${flagType ? `<p class="text-xs font-medium text-gray-500 mt-1 capitalize">${escHtml(flagType)}</p>` : ''}
+              ${preview ? `<p class="text-xs text-gray-400 mt-1.5 italic max-w-xl line-clamp-2">"${escHtml(preview)}"</p>` : ''}
+            </div>
+            <div class="flex-shrink-0 flex items-center gap-2 mt-0.5" data-flag-actions="${escHtml(String(f.id))}">
+              ${viewBtn}
+              ${reviewBtn}
+            </div>
+          </div>
+        </div>
+      </div>`;
   }).join('');
 }
 
@@ -287,22 +337,12 @@ window._reviewFlag = async function(flagId, btn) {
   try {
     await api.patch(`/api/moderation/flags/${flagId}/review`, {});
 
-    // Update the row in-place
-    const row = document.querySelector(`[data-flag-row="${CSS.escape(flagId)}"]`);
-    if (row) {
-      // Status cell (4th td, index 3)
-      const statusCell = row.cells[3];
-      if (statusCell) {
-        statusCell.innerHTML = '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-500">Reviewed</span>';
-      }
-      // Action cell (5th td, index 4)
-      const actionCell = row.cells[4];
-      if (actionCell) {
-        actionCell.innerHTML = '<span class="text-xs text-gray-300">—</span>';
-      }
+    const statusEl = document.querySelector(`[data-flag-status="${CSS.escape(flagId)}"]`);
+    if (statusEl) {
+      statusEl.innerHTML = '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-gray-100 text-gray-500">Reviewed</span>';
     }
+    btn.remove();
 
-    // Decrement badge
     flagBadgeCount = Math.max(0, flagBadgeCount - 1);
     const badge = document.getElementById('flag-badge');
     if (flagBadgeCount > 0) {
@@ -319,11 +359,14 @@ window._reviewFlag = async function(flagId, btn) {
 
 // ─── Tab switching ────────────────────────────────────────────────────────────
 
+// view display type per view id (bypass Tailwind flex/hidden ordering conflicts)
+const VIEW_DISPLAY = { 'view-students': 'flex', 'view-classrooms': 'flex', 'view-moderation': 'block' };
+
 export function switchTab(tab) {
   const tabs  = ['students', 'classrooms', 'moderation'];
-  const views = ['view-students', 'view-classrooms', 'view-moderation'];
+  const views = Object.keys(VIEW_DISPLAY);
 
-  // Deactivate all tabs and hide all views
+  // Deactivate all tabs and hide all views (use style.display to avoid CSS class conflicts)
   tabs.forEach(t => {
     const el = document.getElementById(`tab-${t}`);
     if (el) {
@@ -333,7 +376,7 @@ export function switchTab(tab) {
   });
   views.forEach(v => {
     const el = document.getElementById(v);
-    if (el) el.classList.add('hidden');
+    if (el) el.style.display = 'none';
   });
 
   // Activate selected tab and its view
@@ -343,7 +386,10 @@ export function switchTab(tab) {
     activeTab.classList.add('border-b-2', 'border-[#0A3D3C]', 'text-[#0A3D3C]', 'font-semibold');
     activeTab.classList.remove('text-gray-500', 'border-transparent');
   }
-  if (activeView) activeView.classList.remove('hidden');
+  if (activeView) activeView.style.display = VIEW_DISPLAY[`view-${tab}`] || 'block';
+
+  // Persist tab in URL hash so refresh lands on same tab
+  history.replaceState(null, '', `#${tab}`);
 
   // Side effects per tab
   if (tab === 'moderation') loadFlaggedCount();
@@ -462,12 +508,12 @@ window._openAddLearner = async function() {
   document.getElementById('add-learner-modal').classList.remove('hidden');
 
   try {
-    // Fetch all users with conversations, then filter out already-enrolled ones
+    // Fetch all learners in system, then filter out already-enrolled ones
     const [allRes, membersRes] = await Promise.all([
-      api.get('/api/teacher/classrooms/00000000-0000-0000-0000-000000000001/students'),
+      api.get('/api/teacher/manage/all-learners'),
       api.get(`/api/teacher/manage/classrooms/${activeClassroomId}/members`),
     ]);
-    const allUsers   = allRes?.students ?? [];
+    const allUsers   = allRes?.learners ?? [];
     const enrolled   = new Set((membersRes?.members ?? []).map(m => m.user_id));
     const available  = allUsers.filter(u => !enrolled.has(u.id));
 
@@ -484,8 +530,11 @@ window._openAddLearner = async function() {
           <div class="w-8 h-8 rounded-full bg-[#DAF0EE] flex items-center justify-center text-[#0A3D3C] text-xs font-bold flex-shrink-0">
             ${escHtml(name[0].toUpperCase())}
           </div>
-          <span class="text-sm font-inter text-[#1A1A1A] flex-1 truncate">${escHtml(name)}</span>
-          <span class="text-xs text-[#0A3D3C] font-semibold">+ Add</span>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-inter text-[#1A1A1A] truncate">${escHtml(name)}</p>
+            ${u.email ? `<p class="text-[11px] text-gray-400 truncate">${escHtml(u.email)}</p>` : ''}
+          </div>
+          <span class="text-xs text-[#0A3D3C] font-semibold flex-shrink-0">+ Add</span>
         </button>`;
     }).join('');
   } catch (err) {
@@ -559,16 +608,29 @@ window._confirmAndViewConv = async function() {
     messages.innerHTML = msgs.map(m => {
       const isLearner = m.role === 'learner';
       const unsafe    = m.is_safe === false;
-      return `
-        <div class="flex ${isLearner ? 'justify-end' : 'justify-start'} mb-2 px-1">
-          <div class="max-w-[78%] ${isLearner
-            ? 'bg-[#0A3D3C] text-white rounded-2xl rounded-br-sm'
-            : 'bg-white border border-[#DAF0EE] text-[#1A1A1A] rounded-2xl rounded-bl-sm shadow-sm'
-          } px-4 py-2.5 text-sm font-inter leading-relaxed">
-            ${escHtml(m.content)}
-            ${unsafe ? '<p class="text-[10px] text-[#EE6742] mt-1 font-semibold">Safety flag</p>' : ''}
-          </div>
-        </div>`;
+      if (isLearner) {
+        return `
+          <div class="flex justify-end items-end gap-2 mb-3 px-3">
+            <div class="max-w-[75%] bg-[#0A3D3C] text-white rounded-2xl rounded-br-sm px-4 py-2.5 text-sm font-inter leading-relaxed">
+              ${escHtml(m.content)}
+              ${unsafe ? '<p class="text-[10px] text-[#DAF0EE]/70 mt-1 font-semibold">Safety flag</p>' : ''}
+            </div>
+            <div class="flex-shrink-0 w-7 h-7 rounded-full bg-[#E3F2FD] flex items-center justify-center text-[#3b82f6] text-[10px] font-bold">L</div>
+          </div>`;
+      } else {
+        return `
+          <div class="flex justify-start items-end gap-2 mb-3 px-3">
+            <div class="flex-shrink-0 w-7 h-7 rounded-full bg-[#DAF0EE] flex items-center justify-center">
+              <svg class="w-3.5 h-3.5 text-[#0A3D3C]" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 0 1-2.555-.337A5.972 5.972 0 0 1 5.41 20.97a5.969 5.969 0 0 1-.474-.065 4.48 4.48 0 0 0 .978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25Z" />
+              </svg>
+            </div>
+            <div class="max-w-[75%] bg-white border border-[#DAF0EE] text-[#1A1A1A] rounded-2xl rounded-bl-sm shadow-sm px-4 py-2.5 text-sm font-inter leading-relaxed">
+              ${escHtml(m.content)}
+              ${unsafe ? '<p class="text-[10px] text-[#EE6742] mt-1 font-semibold">Safety flag</p>' : ''}
+            </div>
+          </div>`;
+      }
     }).join('');
     messages.scrollTop = messages.scrollHeight;
   } catch (err) {

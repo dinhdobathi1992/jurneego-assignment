@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JurneeGo — Safe AI for Curious Kids</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet" />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    :root {
+      --primary:   #0A3D3C;
+      --primary-d: #072e2d;
+      --secondary: #DAF0EE;
+      --accent:    #EE6742;
+      --accent-d:  #d55630;
+      --mint:      #F2FBF9;
+      --teal-mid:  #B8E2DE;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: #fff;
+      color: #1A1A1A;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Curved wave between hero and SSA section ── */
+    .wave-bottom {
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      width: 100%;
+      overflow: hidden;
+      line-height: 0;
+    }
+
+    /* ── Buttons ── */
+    .btn-accent {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--accent); color: white;
+      padding: 13px 32px; border-radius: 9999px;
+      font-weight: 700; font-size: 16px;
+      border: none; cursor: pointer; text-decoration: none;
+      transition: background 0.18s, transform 0.15s, box-shadow 0.18s;
+      box-shadow: 0 4px 16px rgba(238,103,66,0.35);
+    }
+    .btn-accent:hover { background: var(--accent-d); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(238,103,66,0.4); }
+    .btn-accent:active { transform: translateY(0); }
+
+    .btn-ghost-white {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: transparent; color: white;
+      padding: 13px 24px; border-radius: 9999px;
+      font-weight: 600; font-size: 16px;
+      border: none; cursor: pointer; text-decoration: none;
+      transition: opacity 0.18s;
+    }
+    .btn-ghost-white:hover { opacity: 0.75; }
+
+    .btn-white {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: white; color: var(--primary);
+      padding: 11px 24px; border-radius: 9999px;
+      font-weight: 700; font-size: 14px;
+      border: none; cursor: pointer; text-decoration: none;
+      transition: background 0.18s;
+    }
+    .btn-white:hover { background: var(--secondary); }
+
+    /* ── Cards ── */
+    .card {
+      background: white;
+      border-radius: 24px;
+      border: 1.5px solid var(--secondary);
+      box-shadow: 0 2px 12px rgba(10,61,60,0.06);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 28px rgba(10,61,60,0.12);
+    }
+
+    /* ── Table ── */
+    .ubd-table tbody tr:hover td { background: var(--mint); }
+    .ubd-table tbody tr { transition: background 0.15s; }
+
+    /* ── Form inputs ── */
+    .wl-input {
+      flex: 1; min-width: 0;
+      background: white; color: var(--primary);
+      padding: 14px 22px; border-radius: 9999px;
+      border: none; outline: none;
+      font-size: 15px; font-weight: 500;
+      font-family: 'Inter', sans-serif;
+      transition: box-shadow 0.2s;
+    }
+    .wl-input:focus { box-shadow: 0 0 0 3px rgba(238,103,66,0.3); }
+    .wl-input::placeholder { color: #9CA3AF; }
+
+    /* ── Icon circle ── */
+    .icon-wrap {
+      width: 80px; height: 80px; min-width: 80px;
+      border-radius: 20px;
+      background: var(--secondary);
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* ── Role avatar ── */
+    .role-avatar {
+      width: 60px; height: 60px; min-width: 60px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* ── Reveal on scroll ── */
+    .reveal { opacity: 0; transform: translateY(22px); transition: opacity 0.55s ease, transform 0.55s ease; }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    section { scroll-margin-top: 72px; }
+
+    /* ── Nav mobile ── */
+    @media (max-width: 768px) {
+      .nav-links { display: none !important; }
+      .nav-mobile { display: flex !important; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     HEADER + HERO  (dark teal)
+══════════════════════════════════════════ -->
+<header style="background: var(--primary); position: relative; overflow: hidden; padding-bottom: 120px;">
+
+  <!-- Nav -->
+  <nav style="max-width:1200px; margin:0 auto; padding:20px 24px; display:flex; align-items:center; justify-content:space-between; position:relative; z-index:10;">
+    <a href="#" aria-label="JurneeGo home">
+      <img src="https://jurneego.ai/assets/jurneego-logo.png" alt="JurneeGo"
+           style="height:36px; width:auto; filter:brightness(0) invert(1);"
+           onerror="this.style.display='none'; this.nextElementSibling.style.display='block'"/>
+      <span style="display:none; font-weight:800; font-size:20px; color:white; letter-spacing:-0.5px;">JURNEEGO</span>
+    </a>
+
+    <div class="nav-links" style="display:flex; align-items:center; gap:32px;">
+      <a href="#how-it-works" style="color:rgba(255,255,255,0.88); font-weight:500; font-size:15px; text-decoration:none; transition:opacity 0.18s;" onmouseover="this.style.opacity='.65'" onmouseout="this.style.opacity='1'">How it Works</a>
+      <a href="#roles"        style="color:rgba(255,255,255,0.88); font-weight:500; font-size:15px; text-decoration:none; transition:opacity 0.18s;" onmouseover="this.style.opacity='.65'" onmouseout="this.style.opacity='1'">Who it's For</a>
+      <a href="#difference"  style="color:rgba(255,255,255,0.88); font-weight:500; font-size:15px; text-decoration:none; transition:opacity 0.18s;" onmouseover="this.style.opacity='.65'" onmouseout="this.style.opacity='1'">Insights</a>
+      <a href="#waitlist" class="btn-white">Waitlist</a>
+    </div>
+
+    <button class="nav-mobile" style="display:none; background:none; border:none; cursor:pointer; padding:6px;" aria-label="Open menu" onclick="toggleNav()">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round">
+        <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+      </svg>
+    </button>
+  </nav>
+
+  <!-- Mobile nav dropdown -->
+  <div id="mobile-nav" style="display:none; background:var(--primary-d); padding:16px 24px 20px; flex-direction:column; gap:4px; position:relative; z-index:10;">
+    <a href="#how-it-works" style="color:rgba(255,255,255,0.88); padding:10px 12px; border-radius:10px; font-weight:500; text-decoration:none;" onclick="toggleNav()">How it Works</a>
+    <a href="#roles"        style="color:rgba(255,255,255,0.88); padding:10px 12px; border-radius:10px; font-weight:500; text-decoration:none;" onclick="toggleNav()">Who it's For</a>
+    <a href="#difference"  style="color:rgba(255,255,255,0.88); padding:10px 12px; border-radius:10px; font-weight:500; text-decoration:none;" onclick="toggleNav()">Insights</a>
+    <a href="#waitlist" class="btn-accent" style="margin-top:8px; justify-content:center;" onclick="toggleNav()">Join Waitlist</a>
+  </div>
+
+  <!-- Hero copy -->
+  <div style="max-width:860px; margin:0 auto; padding:64px 24px 80px; text-align:center; position:relative; z-index:10;">
+    <h1 style="font-size:clamp(2.2rem,5vw,3.6rem); font-weight:800; line-height:1.1; color:white; letter-spacing:-0.03em; margin-bottom:20px;">
+      Safe AI for curious kids.<br />
+      A window into their world for parents.
+    </h1>
+    <p style="font-size:clamp(1rem,2vw,1.15rem); color:rgba(255,255,255,0.82); max-width:560px; margin:0 auto 36px; line-height:1.75; font-weight:400;">
+      JurneeGo helps children explore questions safely with AI – while parents and teachers remain visibly present in the learning journey.
+    </p>
+    <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:16px;">
+      <a href="#waitlist" class="btn-accent">Join the waitlist</a>
+      <a href="#how-it-works" class="btn-ghost-white">See how it works</a>
+    </div>
+  </div>
+
+  <!-- Wave / curved bottom -->
+  <div class="wave-bottom">
+    <svg viewBox="0 0 1440 90" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style="display:block; width:100%; height:90px;">
+      <path d="M0,40 C360,90 1080,0 1440,50 L1440,90 L0,90 Z" fill="#DAF0EE"/>
+    </svg>
+  </div>
+</header>
+
+
+<!-- ══════════════════════════════════════════
+     HOW IT WORKS  (mint/secondary bg)
+══════════════════════════════════════════ -->
+<section id="how-it-works" style="background:var(--secondary); padding:80px 24px 80px;">
+  <div style="max-width:1200px; margin:0 auto;">
+
+    <h2 class="reveal" style="font-size:clamp(1.7rem,3vw,2.2rem); font-weight:800; color:var(--primary); text-align:center; margin-bottom:48px; letter-spacing:-0.025em;">
+      How JurneeGo works
+    </h2>
+
+    <!-- SSA Cards -->
+    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:24px; margin-bottom:56px;">
+
+      <!-- Shared learning card -->
+      <div class="card reveal" style="padding:32px; display:flex; gap:24px; align-items:flex-start;">
+        <div class="icon-wrap">
+          <!-- People/users icon -->
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+        </div>
+        <div>
+          <h3 style="font-size:17px; font-weight:700; color:var(--primary); margin-bottom:14px;">Shared Learning, by design</h3>
+          <ul style="list-style:none; display:flex; flex-direction:column; gap:9px;">
+            <li style="display:flex; gap:10px; font-size:14px; color:#4B5563; line-height:1.5;">
+              <span style="color:var(--primary); font-weight:700; margin-top:1px;">•</span>
+              Child asks a question in a moderated AI chat
+            </li>
+            <li style="display:flex; gap:10px; font-size:14px; color:#4B5563; line-height:1.5;">
+              <span style="color:var(--primary); font-weight:700; margin-top:1px;">•</span>
+              AI responds safely and age-appropriately
+            </li>
+            <li style="display:flex; gap:10px; font-size:14px; color:#4B5563; line-height:1.5;">
+              <span style="color:var(--primary); font-weight:700; margin-top:1px;">•</span>
+              Parents and teachers see the learning journey
+            </li>
+            <li style="display:flex; gap:10px; font-size:14px; color:#4B5563; line-height:1.5;">
+              <span style="color:var(--primary); font-weight:700; margin-top:1px;">•</span>
+              Presence is active — no silent monitoring
+            </li>
+            <li style="display:flex; gap:10px; font-size:14px; color:#4B5563; line-height:1.5;">
+              <span style="color:var(--primary); font-weight:700; margin-top:1px;">•</span>
+              Adults guide through annotations, not overrides
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Why SSA card -->
+      <div class="card reveal" style="padding:32px; display:flex; gap:24px; align-items:flex-start; animation-delay:0.1s;">
+        <div class="icon-wrap">
+          <!-- Shield icon -->
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+        </div>
+        <div>
+          <h3 style="font-size:17px; font-weight:700; color:var(--primary); margin-bottom:14px;">Why SSA matters</h3>
+          <p style="font-size:14px; color:#4B5563; line-height:1.75; margin-bottom:20px;">
+            SSA replaces black-box AI with transparency and trust. Children keep agency. Adults stay meaningfully involved. Learning stays collaborative.
+          </p>
+          <p style="font-size:14px; color:#4B5563; line-height:1.75; margin-bottom:20px;">
+            Designed with consent, auditability, and alignment with leading child data protection frameworks from day one.
+          </p>
+          <a href="#waitlist" style="color:var(--primary); font-weight:700; font-size:14px; text-decoration:none; display:inline-flex; align-items:center; gap:5px; transition:gap 0.18s;"
+             onmouseover="this.style.gap='9px'" onmouseout="this.style.gap='5px'">
+            Experience SSA
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Video -->
+    <div class="reveal" style="max-width:760px; margin:0 auto; animation-delay:0.15s;">
+      <a href="https://www.youtube.com/watch?v=FCNj6kbsdR4" target="_blank" rel="noopener noreferrer"
+         style="display:block; border-radius:28px; overflow:hidden; position:relative; aspect-ratio:16/9; background:#0A3D3C; border:6px solid var(--primary); box-shadow:0 20px 60px rgba(10,61,60,0.35); cursor:pointer;"
+         aria-label="Watch JurneeGo product demo on YouTube"
+         onmouseover="this.querySelector('.play-ring').style.transform='scale(1.12)'; this.querySelector('img').style.transform='scale(1.04)'"
+         onmouseout="this.querySelector('.play-ring').style.transform='scale(1)'; this.querySelector('img').style.transform='scale(1)'">
+
+        <img src="https://img.youtube.com/vi/FCNj6kbsdR4/maxresdefault.jpg"
+             alt="JurneeGo product demo"
+             onerror="this.src='https://img.youtube.com/vi/FCNj6kbsdR4/hqdefault.jpg'"
+             style="width:100%; height:100%; object-fit:cover; display:block; transition:transform 0.35s ease;"/>
+
+        <!-- Gradient overlay -->
+        <div style="position:absolute; inset:0; background:linear-gradient(to bottom, rgba(10,61,60,0.15) 0%, rgba(10,61,60,0.55) 100%);"></div>
+
+        <!-- Play button -->
+        <div class="play-ring" style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; transition:transform 0.2s ease;">
+          <div style="width:72px; height:72px; border-radius:50%; background:rgba(255,255,255,0.18); border:2.5px solid rgba(255,255,255,0.6); display:flex; align-items:center; justify-content:center; backdrop-filter:blur(4px);">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="white" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+          </div>
+          <p style="color:white; font-size:14px; font-weight:500; text-align:center; padding:0 32px; text-shadow:0 1px 6px rgba(0,0,0,0.4);">
+            <span style="opacity:0.8;">Watch: </span>How JurneeGo's Shared Session Architecture<br />keeps children, parents, and teachers connected.
+          </p>
+        </div>
+
+        <!-- YouTube badge -->
+        <div style="position:absolute; bottom:16px; right:16px; display:flex; align-items:center; gap:6px; background:rgba(0,0,0,0.5); border-radius:8px; padding:5px 10px; backdrop-filter:blur(4px);">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+          <span style="color:white; font-size:11px; font-weight:600;">Watch on YouTube</span>
+        </div>
+      </a>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════
+     LEARNING BY DESIGN (UbD)  — white bg
+══════════════════════════════════════════ -->
+<section id="ubd" style="background:white; padding:80px 24px;">
+  <div style="max-width:1200px; margin:0 auto;">
+
+    <h2 class="reveal" style="font-size:clamp(1.7rem,3vw,2.2rem); font-weight:800; color:var(--primary); text-align:center; margin-bottom:12px; letter-spacing:-0.025em;">
+      Learning by Design, Not Just Answers
+    </h2>
+    <p class="reveal" style="text-align:center; color:#6B7280; font-size:15px; max-width:600px; margin:0 auto 48px; line-height:1.7; animation-delay:0.05s;">
+      JurneeGo supports long-term learning through <strong style="color:var(--primary);">Understanding by Design (UbD)</strong>, helping parents and teachers plan backward from meaningful goals.
+    </p>
+
+    <div class="reveal" style="overflow-x:auto; border-radius:20px; border:1.5px solid var(--secondary); box-shadow:0 2px 16px rgba(10,61,60,0.07); animation-delay:0.1s;">
+      <table class="ubd-table" style="width:100%; border-collapse:collapse;">
+        <thead>
+          <tr style="background:var(--secondary);">
+            <th style="text-align:left; padding:16px 24px; font-size:12px; font-weight:800; color:var(--primary); text-transform:uppercase; letter-spacing:0.1em; border-bottom:2px solid var(--teal-mid);">UbD Element</th>
+            <th style="text-align:left; padding:16px 24px; font-size:12px; font-weight:800; color:var(--primary); text-transform:uppercase; letter-spacing:0.1em; border-bottom:2px solid var(--teal-mid);">Example</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-bottom:1px solid var(--secondary);">
+            <td style="padding:18px 24px; font-weight:700; color:var(--primary); font-size:14px; white-space:nowrap;">Long-Term Goal</td>
+            <td style="padding:18px 24px; color:#4B5563; font-size:14px; line-height:1.65;">Develop curiosity and foundational understanding of how technology shapes the world.</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--secondary);">
+            <td style="padding:18px 24px; font-weight:700; color:var(--primary); font-size:14px; white-space:nowrap;">Enduring Understanding</td>
+            <td style="padding:18px 24px; color:#4B5563; font-size:14px; line-height:1.65;">Technology is designed by people and can be understood, questioned, and improved.</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--secondary);">
+            <td style="padding:18px 24px; font-weight:700; color:var(--primary); font-size:14px; white-space:nowrap;">Essential Questions</td>
+            <td style="padding:18px 24px; color:#4B5563; font-size:14px; line-height:1.65;">How do computers "think"? Why do we design rules for technology?</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--secondary);">
+            <td style="padding:18px 24px; font-weight:700; color:var(--primary); font-size:14px; white-space:nowrap;">Daily AI Interactions</td>
+            <td style="padding:18px 24px; color:#4B5563; font-size:14px; line-height:1.65;">Guided conversations with AI that build on these questions over time.</td>
+          </tr>
+          <tr>
+            <td style="padding:18px 24px; font-weight:700; color:var(--primary); font-size:14px; white-space:nowrap;">Adult Guidance</td>
+            <td style="padding:18px 24px; color:#4B5563; font-size:14px; line-height:1.65;">Parent and teacher annotations that connect curiosity to bigger ideas.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════
+     THREE CONNECTED ROLES  (mint bg)
+══════════════════════════════════════════ -->
+<section id="roles" style="background:var(--mint); padding:80px 24px;">
+  <div style="max-width:1200px; margin:0 auto;">
+
+    <h2 class="reveal" style="font-size:clamp(1.7rem,3vw,2.2rem); font-weight:800; color:var(--primary); text-align:center; margin-bottom:48px; letter-spacing:-0.025em;">
+      One platform, three connected roles
+    </h2>
+
+    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:20px;">
+
+      <!-- Children -->
+      <div class="card reveal" style="padding:28px 28px; display:flex; align-items:center; gap:20px;">
+        <div class="role-avatar" style="background:#FFF0E8;">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+          </svg>
+        </div>
+        <div>
+          <h4 style="font-weight:700; color:var(--primary); font-size:16px; margin-bottom:5px;">Children</h4>
+          <p style="font-size:13px; color:#6B7280; line-height:1.6;">Ask questions freely in a safe, age-appropriate AI environment.</p>
+        </div>
+      </div>
+
+      <!-- Parents -->
+      <div class="card reveal" style="padding:28px 28px; display:flex; align-items:center; gap:20px; animation-delay:0.1s;">
+        <div class="role-avatar" style="background:#E8F5E9;">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+        </div>
+        <div>
+          <h4 style="font-weight:700; color:var(--primary); font-size:16px; margin-bottom:5px;">Parents</h4>
+          <p style="font-size:13px; color:#6B7280; line-height:1.6;">See every question. Stay present even when distance makes it hard.</p>
+        </div>
+      </div>
+
+      <!-- Teachers -->
+      <div class="card reveal" style="padding:28px 28px; display:flex; align-items:center; gap:20px; animation-delay:0.2s;">
+        <div class="role-avatar" style="background:#E3F2FD;">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#1565C0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+          </svg>
+        </div>
+        <div>
+          <h4 style="font-weight:700; color:var(--primary); font-size:16px; margin-bottom:5px;">Teachers</h4>
+          <p style="font-size:13px; color:#6B7280; line-height:1.6;">Insight into student curiosity, aligned with classroom learning.</p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Safety callout -->
+    <div class="reveal" style="margin-top:28px; background:white; border-radius:20px; border:1.5px solid var(--secondary); padding:24px 28px; display:flex; align-items:flex-start; gap:18px; box-shadow:0 2px 12px rgba(10,61,60,0.06); animation-delay:0.25s;">
+      <div style="width:44px; height:44px; min-width:44px; border-radius:12px; background:var(--secondary); display:flex; align-items:center; justify-content:center;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </div>
+      <div>
+        <h4 style="font-weight:700; color:var(--primary); font-size:15px; margin-bottom:5px;">Safety &amp; Guardrails</h4>
+        <p style="font-size:14px; color:#4B5563; line-height:1.7;">JurneeGo is built specifically for children's learning — with parents and teachers meaningfully in the loop. Safety is not an add-on. It is the foundation of how learning happens.</p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════
+     HOW JURNEEGO IS DIFFERENT  — white bg
+══════════════════════════════════════════ -->
+<section id="difference" style="background:white; padding:80px 24px;">
+  <div style="max-width:1000px; margin:0 auto;">
+
+    <h2 class="reveal" style="font-size:clamp(1.7rem,3vw,2.2rem); font-weight:800; color:var(--primary); text-align:center; margin-bottom:12px; letter-spacing:-0.025em;">
+      How JurneeGo Is Different
+    </h2>
+    <p class="reveal" style="text-align:center; color:#6B7280; font-size:15px; max-width:580px; margin:0 auto 48px; line-height:1.7; animation-delay:0.05s;">
+      Many children already have access to free, general-purpose AI tools. JurneeGo exists because learning — especially for children — requires different design choices.
+    </p>
+
+    <div class="reveal" style="overflow:hidden; border-radius:24px; border:1.5px solid var(--secondary); box-shadow:0 4px 24px rgba(10,61,60,0.1); animation-delay:0.1s;">
+      <table style="width:100%; border-collapse:collapse;">
+        <thead>
+          <tr>
+            <th style="padding:18px 24px; background:white; border-bottom:1.5px solid var(--secondary); border-right:1.5px solid var(--secondary);"></th>
+            <th style="padding:18px 24px; background:var(--secondary); color:var(--primary); font-size:13px; font-weight:800; text-transform:uppercase; letter-spacing:0.08em; border-bottom:1.5px solid var(--teal-mid); border-right:1.5px solid var(--teal-mid); text-align:center;">Free AI Tools</th>
+            <th style="padding:18px 28px; background:var(--primary); color:white; font-size:13px; font-weight:800; text-transform:uppercase; letter-spacing:0.08em; border-bottom:1.5px solid var(--primary-d); text-align:center;">JurneeGo</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-bottom:1px solid var(--secondary);">
+            <td style="padding:18px 24px; font-weight:700; color:var(--primary); font-size:14px; border-right:1.5px solid var(--secondary);">Designed for</td>
+            <td style="padding:18px 24px; color:#6B7280; font-size:14px; text-align:center; border-right:1.5px solid var(--secondary); background:#FAFAFA;">General use, mixed ages</td>
+            <td style="padding:18px 24px; color:white; font-size:14px; text-align:center; background:var(--primary); font-weight:600;">Children, with adults in the loop</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--secondary);">
+            <td style="padding:18px 24px; font-weight:700; color:var(--primary); font-size:14px; border-right:1.5px solid var(--secondary);">Response style</td>
+            <td style="padding:18px 24px; color:#6B7280; font-size:14px; text-align:center; border-right:1.5px solid var(--secondary); background:#FAFAFA;">Open-ended answers</td>
+            <td style="padding:18px 24px; color:white; font-size:14px; text-align:center; background:var(--primary); font-weight:600;">Age-appropriate guidance</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--secondary);">
+            <td style="padding:18px 24px; font-weight:700; color:var(--primary); font-size:14px; border-right:1.5px solid var(--secondary);">Adult visibility</td>
+            <td style="padding:18px 24px; color:#6B7280; font-size:14px; text-align:center; border-right:1.5px solid var(--secondary); background:#FAFAFA;">None by default</td>
+            <td style="padding:18px 24px; color:white; font-size:14px; text-align:center; background:var(--primary); font-weight:600;">Parent &amp; teacher oversight</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--secondary);">
+            <td style="padding:18px 24px; font-weight:700; color:var(--primary); font-size:14px; border-right:1.5px solid var(--secondary);">Learning focus</td>
+            <td style="padding:18px 24px; color:#6B7280; font-size:14px; text-align:center; border-right:1.5px solid var(--secondary); background:#FAFAFA;">Entertainment &amp; exploration</td>
+            <td style="padding:18px 24px; color:white; font-size:14px; text-align:center; background:var(--primary); font-weight:600;">Understanding &amp; growth</td>
+          </tr>
+          <tr>
+            <td style="padding:18px 24px; font-weight:700; color:var(--primary); font-size:14px; border-right:1.5px solid var(--secondary);">Educational context</td>
+            <td style="padding:18px 24px; color:#6B7280; font-size:14px; text-align:center; border-right:1.5px solid var(--secondary); background:#FAFAFA;">No learning goals</td>
+            <td style="padding:18px 24px; color:white; font-size:14px; text-align:center; background:var(--primary); font-weight:600;">Aligned to learning objectives</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════
+     FOOTER + WAITLIST  (dark teal)
+══════════════════════════════════════════ -->
+<footer id="waitlist" style="background:var(--primary); padding:80px 24px 40px; color:white;">
+  <div style="max-width:760px; margin:0 auto; text-align:center;">
+
+    <h2 class="reveal" style="font-size:clamp(1.8rem,3.5vw,2.4rem); font-weight:800; color:white; margin-bottom:10px; letter-spacing:-0.025em;">
+      Join the JurneeGo waitlist
+    </h2>
+    <p class="reveal" style="color:rgba(255,255,255,0.65); font-size:15px; margin-bottom:40px; animation-delay:0.05s;">
+      We're inviting parents, teachers, and schools to help shape the first release.
+    </p>
+
+    <!-- Waitlist form -->
+    <form id="wl-form" class="reveal" style="display:flex; flex-wrap:wrap; gap:12px; justify-content:center; margin-bottom:48px; animation-delay:0.1s;"
+          onsubmit="handleWaitlist(event)" novalidate>
+      <input type="text"  id="wl-name"  name="first_name" placeholder="First name" class="wl-input" required autocomplete="given-name" style="min-width:180px; max-width:220px;" />
+      <input type="email" id="wl-email" name="email"      placeholder="Email"      class="wl-input" required autocomplete="email"      style="min-width:220px; max-width:280px;" />
+      <button type="submit" class="btn-accent" style="white-space:nowrap;">Join waitlist</button>
+    </form>
+
+    <!-- Success message -->
+    <div id="wl-success" style="display:none; margin-bottom:40px; padding:18px 28px; border-radius:16px; background:rgba(255,255,255,0.12); border:1.5px solid rgba(255,255,255,0.2);" role="alert" aria-live="polite">
+      <p style="color:white; font-weight:700; font-size:16px;">🎉 You're on the list!</p>
+      <p style="color:rgba(255,255,255,0.75); font-size:14px; margin-top:5px;">We'll reach out when JurneeGo is ready for you.</p>
+    </div>
+
+    <!-- Social links -->
+    <div class="reveal" style="display:flex; justify-content:center; gap:16px; margin-bottom:40px; animation-delay:0.15s;">
+      <a href="#" aria-label="JurneeGo on YouTube"
+         style="width:44px; height:44px; border-radius:50%; background:rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; transition:background 0.18s;"
+         onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="white" aria-hidden="true"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+      </a>
+      <a href="#" aria-label="JurneeGo on Facebook"
+         style="width:44px; height:44px; border-radius:50%; background:rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; transition:background 0.18s;"
+         onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="white" aria-hidden="true"><path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/></svg>
+      </a>
+      <a href="#" aria-label="JurneeGo on LinkedIn"
+         style="width:44px; height:44px; border-radius:50%; background:rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; transition:background 0.18s;"
+         onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="white" aria-hidden="true"><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z"/><circle cx="4" cy="4" r="2" fill="white"/></svg>
+      </a>
+    </div>
+
+    <p style="font-size:12px; color:rgba(255,255,255,0.4);">© Copyright JurneeGo, Inc. All rights reserved.</p>
+  </div>
+</footer>
+
+
+<script>
+  function toggleNav() {
+    const nav = document.getElementById('mobile-nav');
+    nav.style.display = nav.style.display === 'none' ? 'flex' : 'none';
+  }
+
+  function handleWaitlist(e) {
+    e.preventDefault();
+    const name  = document.getElementById('wl-name').value.trim();
+    const email = document.getElementById('wl-email').value.trim();
+    if (!name || !email) { alert('Please fill in all fields.'); return; }
+    document.getElementById('wl-form').style.display = 'none';
+    document.getElementById('wl-success').style.display = 'block';
+  }
+
+  // Smooth scroll
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', function(e) {
+      const href = this.getAttribute('href');
+      if (href === '#') return;
+      const target = document.querySelector(href);
+      if (target) { e.preventDefault(); target.scrollIntoView({ behavior: 'smooth' }); }
+    });
+  });
+
+  // Reveal on scroll
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(en => {
+      if (en.isIntersecting) { en.target.classList.add('visible'); io.unobserve(en.target); }
+    });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+  // prefers-reduced-motion
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    document.querySelectorAll('.reveal').forEach(el => {
+      el.style.opacity = '1'; el.style.transform = 'none';
+      el.style.transition = 'none'; el.classList.add('visible');
+    });
+  }
+</script>
+</body>
+</html>

@@ -40,7 +40,7 @@ export const parentRoutes: FastifyPluginAsync = async (fastify) => {
         return reply.send({
           children: (rows as any[]).map(r => ({
             id: r.id,
-            name: r.display_name || (r.external_subject ? String(r.external_subject).slice(0, 16) : null) || 'Learner',
+            name: (r.display_name?.trim() || null) ?? (/^\d+$/.test(String(r.external_subject ?? '')) ? null : String(r.external_subject).slice(0, 20)) ?? 'Learner',
             display_name: r.display_name,
             primary_role: r.primary_role,
             relationship_type: 'admin_view',

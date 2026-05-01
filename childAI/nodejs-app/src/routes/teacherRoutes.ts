@@ -1,6 +1,7 @@
 import { FastifyPluginAsync } from 'fastify';
 import { Type } from '@sinclair/typebox';
 import { authenticate, requireRole } from '../middleware/authMiddleware';
+import { resolveName } from '../utils/nameUtils';
 import { rateLimitFor } from '../middleware/rateLimitMiddleware';
 import { isAssignedTeacher } from '../auth/ownership';
 import {
@@ -72,14 +73,16 @@ export const teacherRoutes: FastifyPluginAsync = async (fastify) => {
         const rows = await db
           .selectFrom('users as u')
           .innerJoin('conversations as c', 'c.learner_user_id', 'u.id')
-          .select(['u.id', 'u.display_name', 'u.external_subject', 'u.primary_role'])
-          .groupBy(['u.id', 'u.display_name', 'u.external_subject', 'u.primary_role'])
+          .select(['u.id', 'u.display_name', 'u.external_subject', 'u.email', 'u.primary_role'])
+          .where('u.primary_role', '=', 'learner')
+          .groupBy(['u.id', 'u.display_name', 'u.external_subject', 'u.email', 'u.primary_role'])
           .orderBy('u.display_name', 'asc')
           .execute();
         const students = rows.map((r: any) => ({
           id: r.id,
-          name: (r.display_name?.trim() || null) ?? (/^\d+$/.test(String(r.external_subject ?? '')) ? null : String(r.external_subject).slice(0, 20)) ?? 'Learner',
+          name: resolveName(r.display_name, r.external_subject, r.email),
           display_name: r.display_name,
+          email: r.email,
           primary_role: r.primary_role,
         }));
         return reply.send({ students });
@@ -280,6 +283,28 @@ export const teacherRoutes: FastifyPluginAsync = async (fastify) => {
   );
 
   // ── Classroom Management ──────────────────────────────────────────────────
+
+  // GET /api/teacher/manage/all-learners — all learners in system (for add-to-classroom picker)
+  fastify.get(
+    '/api/teacher/manage/all-learners',
+    { schema: { tags: ['teacher'], security: [{ bearerAuth: [] }] }, preHandler: [authenticate, teacherGuard] },
+    async (_request, reply) => {
+      const db = getDb();
+      const rows = await db
+        .selectFrom('users')
+        .select(['id', 'display_name', 'external_subject', 'email', 'primary_role'])
+        .where('primary_role', '=', 'learner')
+        .orderBy('display_name', 'asc')
+        .execute();
+      const learners = rows.map((r: any) => ({
+        id: r.id,
+        name: resolveName(r.display_name, r.external_subject, r.email),
+        display_name: r.display_name,
+        email: r.email,
+      }));
+      return reply.send({ learners });
+    }
+  );
 
   // GET /api/teacher/manage/classrooms — all classrooms (admin: all, teacher: assigned)
   fastify.get(

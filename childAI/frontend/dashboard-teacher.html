@@ -111,7 +111,7 @@
   <div class="flex flex-1 overflow-hidden">
 
     <!-- ════ Students view ════ -->
-    <div id="view-students" class="flex flex-1 overflow-hidden">
+    <div id="view-students" class="flex flex-1 overflow-hidden" style="display:none">
 
       <!-- Left sidebar: Classroom + Student list -->
       <aside class="w-52 md:w-60 bg-white border-r border-[#DAF0EE] flex flex-col flex-shrink-0">
@@ -186,13 +186,13 @@
         </div>
 
         <!-- Thread -->
-        <div id="teacher-thread" class="flex-1 overflow-y-auto py-6 space-y-0 px-2"></div>
+        <div id="teacher-thread" class="flex-1 overflow-y-auto py-4"></div>
       </main>
     </div>
     <!-- ════ end Students view ════ -->
 
     <!-- ════ Classrooms view ════ -->
-    <div id="view-classrooms" class="hidden flex-1 overflow-hidden flex">
+    <div id="view-classrooms" class="flex-1 overflow-hidden flex" style="display:none">
 
       <!-- Left: classroom list -->
       <aside class="w-64 bg-white border-r border-[#DAF0EE] flex flex-col flex-shrink-0">
@@ -248,30 +248,11 @@
     <!-- ════ end Classrooms view ════ -->
 
     <!-- ════ Moderation view ════ -->
-    <div id="view-moderation" class="hidden flex-1 overflow-y-auto px-4 md:px-8 py-6">
-      <div class="max-w-5xl mx-auto">
+    <div id="view-moderation" class="flex-1 overflow-y-auto px-4 md:px-8 py-6" style="display:none">
+      <div class="max-w-4xl mx-auto">
         <h2 class="text-xl font-extrabold font-jakarta text-[#0A3D3C] mb-5">Safety Flags</h2>
-
-        <!-- Table card -->
-        <div class="bg-white rounded-2xl shadow-sm border border-[#DAF0EE] overflow-hidden">
-          <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
-              <thead>
-                <tr class="bg-[#DAF0EE]">
-                  <th class="px-4 py-3 text-xs font-semibold font-jakarta text-[#0A3D3C] uppercase tracking-wider">Learner / Conversation</th>
-                  <th class="px-4 py-3 text-xs font-semibold font-jakarta text-[#0A3D3C] uppercase tracking-wider">Flag Type</th>
-                  <th class="px-4 py-3 text-xs font-semibold font-jakarta text-[#0A3D3C] uppercase tracking-wider">Severity</th>
-                  <th class="px-4 py-3 text-xs font-semibold font-jakarta text-[#0A3D3C] uppercase tracking-wider">Status</th>
-                  <th class="px-4 py-3 text-xs font-semibold font-jakarta text-[#0A3D3C] uppercase tracking-wider">Action</th>
-                </tr>
-              </thead>
-              <tbody id="flag-table-body">
-                <tr>
-                  <td colspan="5" class="px-4 py-8 text-center text-sm text-gray-400">Loading…</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+        <div id="flag-table-body" class="space-y-3">
+          <p class="text-center text-sm text-gray-400 py-8">Loading…</p>
         </div>
       </div>
     </div>
@@ -387,7 +368,7 @@
           </svg>
         </button>
       </div>
-      <div id="conv-modal-messages" class="flex-1 overflow-y-auto px-4 py-4 space-y-1 bg-[#F2FBF9]">
+      <div id="conv-modal-messages" class="flex-1 overflow-y-auto py-4 bg-[#F2FBF9]">
         <p class="text-xs text-gray-400 text-center py-4">Loading…</p>
       </div>
     </div>

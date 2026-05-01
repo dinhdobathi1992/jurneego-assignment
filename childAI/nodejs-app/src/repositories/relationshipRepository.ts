@@ -63,7 +63,7 @@ export async function listChildrenWithDetails(
     .execute();
   return (rows as any[]).map(r => ({
     id: r.child_user_id,
-    name: r.display_name || (r.external_subject ? String(r.external_subject).slice(0, 16) : null) || 'Child',
+    name: (r.display_name?.trim() || null) ?? (/^\d+$/.test(String(r.external_subject ?? '')) ? null : String(r.external_subject).slice(0, 20)) ?? 'Child',
     display_name: r.display_name,
     primary_role: r.primary_role,
     relationship_type: r.relationship_type,

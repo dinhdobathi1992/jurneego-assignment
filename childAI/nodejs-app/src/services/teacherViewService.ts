@@ -4,6 +4,7 @@ import { listMessages } from '../repositories/messageRepository';
 import { listSessionsForTeacher } from '../repositories/sharedSessionRepository';
 import { createAuditEvent } from '../repositories/auditRepository';
 import { adultViewRequestsTotal } from './observability/metrics';
+import { resolveName } from '../utils/nameUtils';
 
 /**
  * Teacher view service — all reads are audit-logged and metrics-tracked.
@@ -19,8 +20,9 @@ export async function getStudentsInClassroom(teacherDbId: string, classroomId: s
   const members = await listMembersWithDetails(classroomId);
   return members.map(m => ({
     id: m.user_id,
-    name: (m.display_name?.trim() || null) ?? (/^\d+$/.test(String(m.external_subject ?? '')) ? null : String(m.external_subject).slice(0, 20)) ?? 'Learner',
+    name: resolveName(m.display_name, m.external_subject, m.email),
     display_name: m.display_name,
+    email: m.email,
     primary_role: m.primary_role,
   }));
 }

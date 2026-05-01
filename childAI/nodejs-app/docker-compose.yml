@@ -1,0 +1,86 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      APP_ENV: development
+      APP_HOST: "0.0.0.0"
+      APP_PORT: "8000"
+      LOG_LEVEL: info
+      DATABASE_URL: postgresql://jurnee:jurnee_secret@postgres:5432/jurnee_ai
+      REDIS_URL: redis://redis:6379
+      AUTH_MODE: jwt
+      JWT_ISSUER: http://localhost:9000
+      JWT_AUDIENCE: childai-api
+      DEV_JWT_SECRET: dev-local-jwt-secret-change-me-32chars!!
+      DEV_API_KEY: dev-local-api-key
+      AI_PROVIDER_MODE: fallback
+      AI_PROVIDER_ORDER: mock,litellm,bedrock
+      LITELLM_API_BASE: http://litellm:4000/v1
+      LITELLM_MODEL: gpt-4o-mini
+      LITELLM_API_KEY: sk-local-dev-key
+      SAFETY_ENABLED: "true"
+      SAFETY_LLM_CHECK: "false"
+      SAFETY_STREAM_MODE: buffered
+      SSE_HEARTBEAT_SECONDS: "15"
+      AI_TIMEOUT_SECONDS: "30"
+      AI_MAX_OUTPUT_TOKENS: "512"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: jurnee_ai
+      POSTGRES_USER: jurnee
+      POSTGRES_PASSWORD: jurnee_secret
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jurnee -d jurnee_ai"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    command: redis-server --appendonly yes
+
+  # Optional: LiteLLM proxy profile
+  litellm:
+    image: ghcr.io/berriai/litellm:main-latest
+    profiles: [litellm]
+    ports:
+      - "4000:4000"
+    environment:
+      LITELLM_MASTER_KEY: sk-local-dev-key
+    command: --model gpt-4o-mini --port 4000
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:

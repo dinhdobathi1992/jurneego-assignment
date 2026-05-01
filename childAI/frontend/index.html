@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bubbli — Sign In</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            teal:   { DEFAULT: '#0A3D3C', dark: '#072e2d', light: '#DAF0EE', xlight: '#F2FBF9' },
+            accent: { DEFAULT: '#EE6742', dark: '#d55630' },
+          },
+          fontFamily: {
+            jakarta: ['"Plus Jakarta Sans"', 'sans-serif'],
+            inter:   ['Inter', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    h1, h2, h3 { font-family: 'Plus Jakarta Sans', sans-serif; }
+
+    .google-btn {
+      transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+    }
+    .google-btn:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 28px rgba(10,61,60,0.18);
+      border-color: #0A3D3C;
+    }
+    .google-btn:active:not(:disabled) {
+      transform: translateY(0);
+    }
+    .google-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .google-btn { transition: none; }
+    }
+
+    /* Error banner slide-in */
+    .error-banner {
+      animation: slideDown 0.25s ease;
+    }
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex items-center justify-center px-4 py-8"
+      style="background: #0A3D3C; background: radial-gradient(circle at 70% 15%, #1a5f5e 0%, #0A3D3C 55%);">
+
+  <!-- Error banner (shown if ?error= param present) -->
+  <div id="error-banner"
+       class="error-banner hidden fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-[#EE6742] text-white text-sm font-inter font-medium px-5 py-3 rounded-2xl shadow-lg max-w-sm text-center">
+  </div>
+
+  <!-- Login Card -->
+  <div class="w-full max-w-md">
+
+    <!-- Logo -->
+    <div class="flex justify-center mb-8">
+      <img src="./assets/logo.png"
+           alt="Bubbli"
+           class="h-16 object-contain rounded-2xl shadow-lg" />
+    </div>
+
+    <!-- Card -->
+    <div class="bg-white rounded-3xl shadow-2xl px-8 py-10">
+
+      <!-- Heading -->
+      <div class="text-center mb-8">
+        <h1 class="font-jakarta font-extrabold text-[1.6rem] text-[#0A3D3C] mb-2 leading-tight">
+          Welcome back
+        </h1>
+        <p class="text-[#6B7280] text-sm leading-relaxed">
+          Safe AI for curious kids.<br />
+          A window into their world for parents &amp; teachers.
+        </p>
+      </div>
+
+      <!-- Role Preview -->
+      <div class="flex justify-center gap-6 mb-8">
+        <!-- Chatter -->
+        <div class="flex flex-col items-center gap-2">
+          <div class="w-12 h-12 rounded-full bg-[#FFF0E8] flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-[#EE6742]" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+            </svg>
+          </div>
+          <span class="text-[11px] text-[#6B7280] font-medium">Bubbli</span>
+        </div>
+        <!-- Parent -->
+        <div class="flex flex-col items-center gap-2">
+          <div class="w-12 h-12 rounded-full bg-[#E8F5E9] flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-[#22c55e]" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" />
+            </svg>
+          </div>
+          <span class="text-[11px] text-[#6B7280] font-medium">Parent</span>
+        </div>
+        <!-- Teacher -->
+        <div class="flex flex-col items-center gap-2">
+          <div class="w-12 h-12 rounded-full bg-[#E3F2FD] flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-[#3b82f6]" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-7.007 11.55A5.981 5.981 0 0 0 6.75 15.75v-1.5" />
+            </svg>
+          </div>
+          <span class="text-[11px] text-[#6B7280] font-medium">Teacher</span>
+        </div>
+      </div>
+
+      <!-- Divider with label -->
+      <div class="flex items-center gap-3 mb-6">
+        <div class="flex-1 h-px bg-[#DAF0EE]"></div>
+        <span class="text-[11px] text-[#9CA3AF] font-medium">Sign in to continue</span>
+        <div class="flex-1 h-px bg-[#DAF0EE]"></div>
+      </div>
+
+      <!-- Google Sign-In Button -->
+      <button id="google-btn"
+              class="google-btn w-full flex items-center justify-center gap-3 bg-white border-2 border-[#DAF0EE] rounded-full px-6 py-3.5 text-[#0A3D3C] font-jakarta font-bold text-[15px] cursor-pointer shadow-sm"
+              onclick="handleGoogleLogin()">
+        <!-- Official Google G logo -->
+        <svg class="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+        </svg>
+        <span id="google-btn-text">Continue with Google</span>
+      </button>
+
+      <!-- Legal -->
+      <div class="mt-8 pt-6 border-t border-[#DAF0EE] text-center">
+        <p class="text-[11px] text-[#9CA3AF] leading-relaxed">
+          By continuing, you agree to Bubbli's
+          <a href="#" class="text-[#0A3D3C] underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0A3D3C]/30 rounded cursor-pointer">Terms</a>
+          and
+          <a href="#" class="text-[#0A3D3C] underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0A3D3C]/30 rounded cursor-pointer">Privacy Policy</a>.
+          <br />Your child's safety is our priority.
+        </p>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="text-center mt-6 space-y-1">
+      <p class="text-[#B8E2DE] text-xs">
+        Powered by Bubbli Safe AI &bull; COPPA &amp; GDPR-K compliant
+      </p>
+      <p class="text-[#7AADA8] text-[10px] italic">
+        Bubbli — a playful blend of <em>buddy</em> &amp; <em>baby</em>, a friend and guide for every curious child
+      </p>
+    </div>
+  </div>
+
+  <script type="module">
+    import { loginWithGoogle, routeByRole } from './js/auth.js';
+
+    // Show error if redirected back with error param
+    const urlParams = new URLSearchParams(location.search);
+    const error = urlParams.get('error');
+    if (error) {
+      const errorMessages = {
+        oauth_failed:    'Google sign-in was cancelled or failed. Please try again.',
+        exchange_failed: 'Could not verify your account. Please try again.',
+        session_expired: 'Your session has expired. Please sign in again.',
+      };
+      const banner = document.getElementById('error-banner');
+      banner.textContent = errorMessages[error] ?? 'Something went wrong. Please try again.';
+      banner.classList.remove('hidden');
+      setTimeout(() => banner.classList.add('hidden'), 5000);
+    }
+
+    // If already logged in, redirect immediately
+    const token = sessionStorage.getItem('app_token');
+    const role  = sessionStorage.getItem('user_role');
+    if (token && role) {
+      routeByRole(role);
+    }
+
+    window.handleGoogleLogin = function() {
+      const btn     = document.getElementById('google-btn');
+      const btnText = document.getElementById('google-btn-text');
+      btn.disabled  = true;
+      btnText.textContent = 'Redirecting to Google…';
+      loginWithGoogle();
+    };
+  </script>
+</body>
+</html>
