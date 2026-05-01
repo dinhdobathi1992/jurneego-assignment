@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bubbli — Signing you in…</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen flex items-center justify-center"
+      style="background: radial-gradient(circle at 70% 15%, #1a5f5e 0%, #0A3D3C 55%);">
+  <div class="text-center">
+    <div class="w-14 h-14 border-4 border-[#DAF0EE] border-t-[#EE6742] rounded-full animate-spin mx-auto mb-5"></div>
+    <p class="text-white font-jakarta font-bold text-lg mb-1">Signing you in…</p>
+    <p class="text-[#B8E2DE] text-sm">Please wait</p>
+  </div>
+  <script type="module">
+    import { handleCallback } from './js/auth.js';
+    handleCallback();
+  </script>
+</body>
+</html>

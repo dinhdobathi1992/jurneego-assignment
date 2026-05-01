@@ -1,0 +1,6 @@
+# Claude Code and Cursor local tooling (keep local only)
+.claude/
+.cursor/
+
+# Onyx reference clone (read-only, for feature research)
+onyx-reference/

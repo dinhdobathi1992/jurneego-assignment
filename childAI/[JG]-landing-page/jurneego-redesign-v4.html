@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JurneeGo — Safe AI for Curious Kids</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    :root {
+      --primary:   #0A3D3C;
+      --primary-d: #072e2d;
+      --secondary: #DAF0EE;
+      --accent:    #EE6742;
+      --accent-d:  #d55630;
+      --mint:      #F2FBF9;
+      --teal-mid:  #B8E2DE;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
+      background: #fff;
+      color: #1A1A1A;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Wave ── */
+    .wave-bottom {
+      position: absolute;
+      bottom: -2px; left: 0;
+      width: 100%; overflow: hidden; line-height: 0;
+    }
+
+    /* ── Buttons ── */
+    .btn-accent {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--accent); color: white;
+      padding: 12px 28px; border-radius: 9999px;
+      font-weight: 700; font-size: 15px;
+      border: none; cursor: pointer; text-decoration: none;
+      transition: background 0.18s, transform 0.15s, box-shadow 0.18s;
+      box-shadow: 0 4px 16px rgba(238,103,66,0.35);
+    }
+    .btn-accent:hover { background: var(--accent-d); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(238,103,66,0.4); }
+    .btn-accent:active { transform: translateY(0); }
+
+    .btn-ghost-white {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: transparent; color: white;
+      padding: 12px 22px; border-radius: 9999px;
+      font-weight: 600; font-size: 15px;
+      border: none; cursor: pointer; text-decoration: none;
+      transition: opacity 0.18s;
+    }
+    .btn-ghost-white:hover { opacity: 0.7; }
+
+    .btn-nav {
+      display: inline-flex; align-items: center;
+      background: rgba(255,255,255,0.15); color: white;
+      padding: 8px 20px; border-radius: 9999px;
+      font-weight: 600; font-size: 14px;
+      border: 1.5px solid rgba(255,255,255,0.3); cursor: pointer; text-decoration: none;
+      transition: background 0.18s;
+    }
+    .btn-nav:hover { background: rgba(255,255,255,0.25); }
+
+    /* ── Cards ── */
+    .card {
+      background: white;
+      border-radius: 20px;
+      border: 1.5px solid var(--secondary);
+      box-shadow: 0 2px 12px rgba(10,61,60,0.06);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 28px rgba(10,61,60,0.12);
+    }
+
+    /* ── Icon block ── */
+    .icon-block {
+      width: 88px; height: 88px; min-width: 88px;
+      border-radius: 18px;
+      background: var(--secondary);
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* ── Role chip ── */
+    .role-chip {
+      width: 52px; height: 52px; min-width: 52px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* ── Tables ── */
+    .ubd-table tbody tr:hover td { background: var(--mint); }
+    .ubd-table tbody tr { transition: background 0.15s; }
+
+    /* ── Form ── */
+    .wl-input {
+      flex: 1; min-width: 0;
+      background: white; color: var(--primary);
+      padding: 13px 20px; border-radius: 9999px;
+      border: none; outline: none;
+      font-size: 14px; font-weight: 500;
+      font-family: 'Inter', sans-serif;
+      transition: box-shadow 0.2s;
+    }
+    .wl-input:focus { box-shadow: 0 0 0 3px rgba(238,103,66,0.3); }
+    .wl-input::placeholder { color: #9CA3AF; }
+
+    /* ── Reveal ── */
+    .reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.5s ease, transform 0.5s ease; }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    section { scroll-margin-top: 70px; }
+
+    @media (max-width: 768px) {
+      .nav-links { display: none !important; }
+      .nav-mobile-btn { display: flex !important; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     HEADER + HERO
+══════════════════════════════════════════ -->
+<header style="background: var(--primary); position: relative; overflow: hidden; padding-bottom: 160px;">
+
+  <!-- Nav — white floating pill -->
+  <nav style="max-width:1100px; margin:0 auto; padding:18px 28px; position:relative; z-index:10;">
+    <div style="background:white; border-radius:9999px; padding:14px 14px 14px 28px; display:flex; align-items:center; justify-content:space-between; box-shadow:0 4px 28px rgba(0,0,0,0.13);">
+
+      <!-- Logo -->
+      <a href="#" aria-label="JurneeGo home" style="display:flex; align-items:center; gap:8px; text-decoration:none;">
+        <img src="https://jurneego.ai/assets/jurneego-logo.png" alt="JurneeGo"
+             style="height:32px; width:auto;"
+             onerror="this.style.display='none'; this.nextElementSibling.style.display='block'"/>
+        <span style="display:none; font-weight:800; font-size:17px; color:var(--primary); letter-spacing:-0.3px;">JurneeGo</span>
+      </a>
+
+      <!-- Links (desktop) -->
+      <div class="nav-links" style="display:flex; align-items:center; gap:6px;">
+        <a href="#how-it-works" style="color:#374151; font-weight:500; font-size:15px; text-decoration:none; padding:10px 20px; border-radius:9999px; transition:background 0.18s; cursor:pointer;" onmouseover="this.style.background='#F3F4F6'" onmouseout="this.style.background='transparent'">How it Works</a>
+        <a href="#roles"        style="color:#374151; font-weight:500; font-size:15px; text-decoration:none; padding:10px 20px; border-radius:9999px; transition:background 0.18s; cursor:pointer;" onmouseover="this.style.background='#F3F4F6'" onmouseout="this.style.background='transparent'">Who it's For</a>
+        <a href="#difference"   style="color:#374151; font-weight:500; font-size:15px; text-decoration:none; padding:10px 20px; border-radius:9999px; transition:background 0.18s; cursor:pointer;" onmouseover="this.style.background='#F3F4F6'" onmouseout="this.style.background='transparent'">Insights</a>
+        <a href="#waitlist" style="background:var(--primary); color:white; font-weight:600; font-size:15px; text-decoration:none; padding:11px 28px; border-radius:9999px; transition:background 0.18s; cursor:pointer; white-space:nowrap;" onmouseover="this.style.background='var(--primary-d)'" onmouseout="this.style.background='var(--primary)'">Waitlist</a>
+      </div>
+
+      <!-- Mobile menu btn -->
+      <button class="nav-mobile-btn" style="display:none; background:none; border:none; cursor:pointer; padding:4px; margin-right:6px;" aria-label="Open menu" onclick="toggleNav()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="2.5" stroke-linecap="round">
+          <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Mobile nav -->
+  <div id="mobile-nav" style="display:none; background:white; margin:0 28px; border-radius:20px; padding:12px 16px 16px; flex-direction:column; gap:2px; position:relative; z-index:10; box-shadow:0 8px 24px rgba(0,0,0,0.12); margin-bottom:12px;">
+    <a href="#how-it-works" style="color:#374151; padding:10px 14px; border-radius:10px; font-weight:500; text-decoration:none; transition:background 0.15s;" onclick="toggleNav()" onmouseover="this.style.background='#F3F4F6'" onmouseout="this.style.background='transparent'">How it Works</a>
+    <a href="#roles"        style="color:#374151; padding:10px 14px; border-radius:10px; font-weight:500; text-decoration:none; transition:background 0.15s;" onclick="toggleNav()" onmouseover="this.style.background='#F3F4F6'" onmouseout="this.style.background='transparent'">Who it's For</a>
+    <a href="#difference"   style="color:#374151; padding:10px 14px; border-radius:10px; font-weight:500; text-decoration:none; transition:background 0.15s;" onclick="toggleNav()" onmouseover="this.style.background='#F3F4F6'" onmouseout="this.style.background='transparent'">Insights</a>
+    <a href="#waitlist" class="btn-accent" style="margin-top:6px; justify-content:center;" onclick="toggleNav()">Join Waitlist</a>
+  </div>
+
+  <!-- Hero Copy -->
+  <div style="max-width:800px; margin:0 auto; padding:60px 28px 72px; text-align:center; position:relative; z-index:10;">
+    <h1 style="font-size:clamp(2.1rem,4.8vw,3.4rem); font-weight:800; line-height:1.1; color:white; letter-spacing:-0.03em; margin-bottom:18px;">
+      Safe AI for curious kids.<br />
+      A window into their world for parents.
+    </h1>
+    <p style="font-size:clamp(0.95rem,1.8vw,1.1rem); color:rgba(255,255,255,0.78); max-width:520px; margin:0 auto 32px; line-height:1.8; font-weight:400;">
+      JurneeGo helps children explore questions safely with AI – while parents and teachers remain visibly present in the learning journey.
+    </p>
+    <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:12px;">
+      <a href="#waitlist" class="btn-accent">Join the waitlist</a>
+      <a href="#how-it-works" class="btn-ghost-white">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        See how it works
+      </a>
+    </div>
+  </div>
+
+  <!-- Wave — deep dramatic S-curve -->
+  <div class="wave-bottom">
+    <svg viewBox="0 0 1440 160" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style="display:block; width:100%; height:160px;">
+      <path d="M0,80 C200,160 400,20 720,100 C1040,175 1280,30 1440,90 L1440,160 L0,160 Z" fill="#DAF0EE"/>
+    </svg>
+  </div>
+</header>
+
+
+<!-- ══════════════════════════════════════════
+     HOW IT WORKS  (mint/secondary bg)
+══════════════════════════════════════════ -->
+<section id="how-it-works" style="background:var(--secondary); padding:72px 28px 100px; position:relative;">
+  <div style="max-width:1140px; margin:0 auto;">
+
+    <h2 class="reveal" style="font-size:clamp(1.6rem,2.8vw,2.1rem); font-weight:800; color:var(--primary); text-align:center; margin-bottom:44px; letter-spacing:-0.025em;">
+      How JurneeGo works
+    </h2>
+
+    <!-- Two cards -->
+    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:20px; margin-bottom:48px;">
+
+      <!-- Shared learning -->
+      <div class="card reveal" style="padding:28px 28px 28px 24px; display:flex; gap:24px; align-items:flex-start; cursor:default;">
+        <!-- Large illustrated icon: robot + child -->
+        <div style="flex-shrink:0; width:100px; height:100px; border-radius:20px; background:var(--secondary); display:flex; align-items:center; justify-content:center;">
+          <svg width="72" height="72" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <!-- Child body -->
+            <ellipse cx="56" cy="62" rx="10" ry="8" fill="#EE6742" opacity="0.8"/>
+            <!-- Child head -->
+            <circle cx="56" cy="22" r="10" fill="#FBBF9A"/>
+            <!-- Child hair -->
+            <path d="M46 20 Q56 10 66 20" fill="#7C4A1E" stroke="none"/>
+            <!-- Child face dot eyes -->
+            <circle cx="52" cy="21" r="1.5" fill="#1A1A1A"/>
+            <circle cx="60" cy="21" r="1.5" fill="#1A1A1A"/>
+            <!-- Child smile -->
+            <path d="M52 26 Q56 29 60 26" stroke="#1A1A1A" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+            <!-- Child torso -->
+            <rect x="47" y="32" width="18" height="20" rx="6" fill="#EE6742"/>
+            <!-- Robot body -->
+            <rect x="6" y="34" width="30" height="26" rx="8" fill="#0A3D3C"/>
+            <!-- Robot head -->
+            <rect x="10" y="16" width="22" height="20" rx="6" fill="#0A3D3C"/>
+            <!-- Robot eyes -->
+            <circle cx="17" cy="25" r="3" fill="white"/>
+            <circle cx="25" cy="25" r="3" fill="white"/>
+            <circle cx="17" cy="25" r="1.5" fill="#4ECDC4"/>
+            <circle cx="25" cy="25" r="1.5" fill="#4ECDC4"/>
+            <!-- Robot mouth bar -->
+            <rect x="14" y="30" width="14" height="3" rx="1.5" fill="#DAF0EE"/>
+            <!-- Robot antenna -->
+            <line x1="21" y1="16" x2="21" y2="9" stroke="#0A3D3C" stroke-width="2.5" stroke-linecap="round"/>
+            <circle cx="21" cy="7" r="3" fill="#EE6742"/>
+            <!-- Robot arms -->
+            <rect x="2" y="38" width="6" height="14" rx="3" fill="#0A3D3C"/>
+            <rect x="34" y="38" width="6" height="14" rx="3" fill="#0A3D3C"/>
+            <!-- Connection sparkles -->
+            <circle cx="42" cy="40" r="2" fill="#B8E2DE"/>
+            <circle cx="45" cy="35" r="1.5" fill="#B8E2DE"/>
+            <circle cx="47" cy="42" r="1" fill="#B8E2DE"/>
+          </svg>
+        </div>
+        <div style="flex:1;">
+          <h3 style="font-size:15.5px; font-weight:700; color:var(--primary); margin-bottom:12px;">Shared Learning, by design</h3>
+          <ul style="list-style:none; display:flex; flex-direction:column; gap:7px;">
+            <li style="display:flex; gap:9px; font-size:13px; color:#4B5563; line-height:1.55; align-items:flex-start;">
+              <span style="color:var(--primary); font-weight:800; line-height:1.6; flex-shrink:0;">•</span>Child asks a question in a moderated AI chat
+            </li>
+            <li style="display:flex; gap:9px; font-size:13px; color:#4B5563; line-height:1.55; align-items:flex-start;">
+              <span style="color:var(--primary); font-weight:800; line-height:1.6; flex-shrink:0;">•</span>AI responds safely and age-appropriately
+            </li>
+            <li style="display:flex; gap:9px; font-size:13px; color:#4B5563; line-height:1.55; align-items:flex-start;">
+              <span style="color:var(--primary); font-weight:800; line-height:1.6; flex-shrink:0;">•</span>Parents and teachers see the learning journey
+            </li>
+            <li style="display:flex; gap:9px; font-size:13px; color:#4B5563; line-height:1.55; align-items:flex-start;">
+              <span style="color:var(--primary); font-weight:800; line-height:1.6; flex-shrink:0;">•</span>Presence is active — no silent monitoring
+            </li>
+            <li style="display:flex; gap:9px; font-size:13px; color:#4B5563; line-height:1.55; align-items:flex-start;">
+              <span style="color:var(--primary); font-weight:800; line-height:1.6; flex-shrink:0;">•</span>Adults guide through annotations, not overrides
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Why SSA -->
+      <div class="card reveal" style="padding:28px 28px 28px 24px; display:flex; gap:24px; align-items:flex-start; cursor:default;">
+        <!-- Large illustrated icon: golden lock + gear -->
+        <div style="flex-shrink:0; width:100px; height:100px; border-radius:20px; background:var(--secondary); display:flex; align-items:center; justify-content:center;">
+          <svg width="72" height="72" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <!-- Gear back-left -->
+            <circle cx="18" cy="54" r="14" fill="#B8E2DE"/>
+            <circle cx="18" cy="54" r="8" fill="#DAF0EE"/>
+            <circle cx="18" cy="54" r="3" fill="#0A3D3C"/>
+            <!-- Gear teeth left -->
+            <rect x="15" y="38" width="6" height="5" rx="2" fill="#B8E2DE"/>
+            <rect x="15" y="67" width="6" height="5" rx="2" fill="#B8E2DE"/>
+            <rect x="2" y="51" width="5" height="6" rx="2" fill="#B8E2DE"/>
+            <rect x="31" y="51" width="5" height="6" rx="2" fill="#B8E2DE"/>
+            <!-- Lock body -->
+            <rect x="26" y="38" width="34" height="28" rx="8" fill="#F59E0B"/>
+            <!-- Lock shine -->
+            <rect x="30" y="42" width="10" height="6" rx="3" fill="rgba(255,255,255,0.35)"/>
+            <!-- Lock shackle -->
+            <path d="M33 38 L33 28 C33 20 47 20 47 28 L47 38" stroke="#D97706" stroke-width="5" stroke-linecap="round" fill="none"/>
+            <!-- Keyhole circle -->
+            <circle cx="43" cy="52" r="5" fill="#D97706"/>
+            <!-- Keyhole slot -->
+            <rect x="41" y="52" width="4" height="7" rx="2" fill="#D97706"/>
+            <!-- Small gear right -->
+            <circle cx="62" cy="24" r="10" fill="#DAF0EE"/>
+            <circle cx="62" cy="24" r="5.5" fill="#B8E2DE"/>
+            <circle cx="62" cy="24" r="2" fill="#0A3D3C"/>
+            <rect x="59" y="12" width="6" height="4" rx="2" fill="#DAF0EE"/>
+            <rect x="59" y="32" width="6" height="4" rx="2" fill="#DAF0EE"/>
+            <rect x="50" y="21" width="4" height="6" rx="2" fill="#DAF0EE"/>
+            <rect x="70" y="21" width="4" height="6" rx="2" fill="#DAF0EE"/>
+          </svg>
+        </div>
+        <div style="flex:1;">
+          <h3 style="font-size:15.5px; font-weight:700; color:var(--primary); margin-bottom:12px;">Why SSA matters</h3>
+          <p style="font-size:13px; color:#4B5563; line-height:1.75; margin-bottom:12px;">
+            SSA replaces black-box AI with transparency and trust. Children keep agency. Adults stay meaningfully involved. Learning stays collaborative.
+          </p>
+          <p style="font-size:13px; color:#4B5563; line-height:1.75; margin-bottom:16px;">
+            Designed with consent, auditability, and alignment with leading child data protection frameworks from day one.
+          </p>
+          <a href="#waitlist" style="color:var(--primary); font-weight:700; font-size:13px; text-decoration:none; display:inline-flex; align-items:center; gap:5px; transition:gap 0.18s; cursor:pointer;"
+             onmouseover="this.style.gap='9px'" onmouseout="this.style.gap='5px'">
+            Experience SSA
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Video -->
+    <div class="reveal" style="max-width:720px; margin:0 auto;">
+      <!-- Teal framed container matching the image -->
+      <div style="background:var(--teal-mid); border-radius:28px; padding:10px; box-shadow:0 20px 60px rgba(10,61,60,0.25);">
+        <a href="https://www.youtube.com/watch?v=FCNj6kbsdR4" target="_blank" rel="noopener noreferrer"
+           style="display:block; border-radius:20px; overflow:hidden; position:relative; aspect-ratio:16/9; background:#0A3D3C; cursor:pointer;"
+           aria-label="Watch JurneeGo product demo on YouTube"
+           onmouseover="this.querySelector('.play-btn').style.transform='scale(1.1)'; this.querySelector('.thumb').style.transform='scale(1.04)'"
+           onmouseout="this.querySelector('.play-btn').style.transform='scale(1)'; this.querySelector('.thumb').style.transform='scale(1)'">
+
+          <img class="thumb" src="https://img.youtube.com/vi/FCNj6kbsdR4/maxresdefault.jpg"
+               alt="JurneeGo product demo"
+               onerror="this.src='https://img.youtube.com/vi/FCNj6kbsdR4/hqdefault.jpg'"
+               style="width:100%; height:100%; object-fit:cover; display:block; transition:transform 0.35s ease; opacity:0.5;"/>
+          <div style="position:absolute; inset:0; background:rgba(10,61,60,0.6);"></div>
+
+          <!-- Play button -->
+          <div class="play-btn" style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; transition:transform 0.2s ease;">
+            <div style="width:64px; height:64px; border-radius:50%; background:rgba(255,255,255,0.2); border:2px solid rgba(255,255,255,0.5); display:flex; align-items:center; justify-content:center; backdrop-filter:blur(4px);">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="white" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+            </div>
+            <p style="color:white; font-size:13px; font-weight:500; text-align:center; padding:0 32px; text-shadow:0 1px 6px rgba(0,0,0,0.5); line-height:1.6;">
+              <strong style="opacity:1;">Watch:</strong> <span style="opacity:0.85;">How JurneeGo's Shared Session Architecture<br />keeps children, parents, and teachers connected.</span>
+            </p>
+          </div>
+        </a>
+      </div>
+    </div>
+
+    <!-- Inverse wave out of mint section -->
+    <div style="position:absolute; bottom:-2px; left:0; width:100%; overflow:hidden; line-height:0;">
+      <svg viewBox="0 0 1440 100" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style="display:block; width:100%; height:100px;">
+        <path d="M0,40 C300,100 600,0 900,60 C1100,100 1300,20 1440,50 L1440,100 L0,100 Z" fill="white"/>
+      </svg>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════
+     LEARNING BY DESIGN (UbD)  — white bg
+══════════════════════════════════════════ -->
+<section id="ubd" style="background:white; padding:72px 28px;">
+  <div style="max-width:1140px; margin:0 auto;">
+
+    <h2 class="reveal" style="font-size:clamp(1.6rem,2.8vw,2.1rem); font-weight:800; color:var(--primary); text-align:center; margin-bottom:10px; letter-spacing:-0.025em;">
+      Learning by Design, Not Just Answers
+    </h2>
+    <p class="reveal" style="text-align:center; color:#6B7280; font-size:14.5px; max-width:560px; margin:0 auto 44px; line-height:1.75;">
+      JurneeGo supports long-term learning through <strong style="color:var(--primary);">Understanding by Design (UbD)</strong>, helping parents and teachers plan backward from meaningful goals.
+    </p>
+
+    <div class="reveal" style="overflow-x:auto; border-radius:18px; border:1.5px solid var(--secondary); box-shadow:0 2px 16px rgba(10,61,60,0.07);">
+      <table class="ubd-table" style="width:100%; border-collapse:collapse; min-width:480px;">
+        <thead>
+          <tr style="background:var(--secondary);">
+            <th style="text-align:left; padding:15px 24px; font-size:11px; font-weight:800; color:var(--primary); text-transform:uppercase; letter-spacing:0.1em; border-bottom:2px solid var(--teal-mid); width:38%;">UbD Element</th>
+            <th style="text-align:left; padding:15px 24px; font-size:11px; font-weight:800; color:var(--primary); text-transform:uppercase; letter-spacing:0.1em; border-bottom:2px solid var(--teal-mid);">Example</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-bottom:1px solid var(--secondary);">
+            <td style="padding:16px 24px; font-weight:700; color:var(--primary); font-size:13.5px; white-space:nowrap;">Long-Term Goal</td>
+            <td style="padding:16px 24px; color:#4B5563; font-size:13.5px; line-height:1.65;">Develop curiosity and foundational understanding of how technology shapes the world.</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--secondary);">
+            <td style="padding:16px 24px; font-weight:700; color:var(--primary); font-size:13.5px; white-space:nowrap;">Enduring Understanding</td>
+            <td style="padding:16px 24px; color:#4B5563; font-size:13.5px; line-height:1.65;">Technology is designed by people and can be understood, questioned, and improved.</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--secondary);">
+            <td style="padding:16px 24px; font-weight:700; color:var(--primary); font-size:13.5px; white-space:nowrap;">Essential Questions</td>
+            <td style="padding:16px 24px; color:#4B5563; font-size:13.5px; line-height:1.65;">How do computers "think"? Why do we design rules for technology?</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--secondary);">
+            <td style="padding:16px 24px; font-weight:700; color:var(--primary); font-size:13.5px; white-space:nowrap;">Daily AI Interactions</td>
+            <td style="padding:16px 24px; color:#4B5563; font-size:13.5px; line-height:1.65;">Guided conversations with AI that build on these questions over time.</td>
+          </tr>
+          <tr>
+            <td style="padding:16px 24px; font-weight:700; color:var(--primary); font-size:13.5px; white-space:nowrap;">Adult Guidance</td>
+            <td style="padding:16px 24px; color:#4B5563; font-size:13.5px; line-height:1.65;">Parent and teacher annotations that connect curiosity to bigger ideas.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════
+     THREE CONNECTED ROLES  (mint bg)
+══════════════════════════════════════════ -->
+<section id="roles" style="background:var(--mint); padding:72px 28px;">
+  <div style="max-width:1140px; margin:0 auto;">
+
+    <h2 class="reveal" style="font-size:clamp(1.6rem,2.8vw,2.1rem); font-weight:800; color:var(--primary); text-align:center; margin-bottom:44px; letter-spacing:-0.025em;">
+      One platform, three connected roles
+    </h2>
+
+    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:16px; margin-bottom:20px;">
+
+      <!-- Children -->
+      <div class="card reveal" style="padding:24px; display:flex; align-items:center; gap:16px; cursor:default;">
+        <div class="role-chip" style="background:#FFF0E8;">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+          </svg>
+        </div>
+        <div>
+          <h4 style="font-weight:700; color:var(--primary); font-size:15px; margin-bottom:4px;">Children</h4>
+          <p style="font-size:12.5px; color:#6B7280; line-height:1.6;">Ask questions freely in a safe, age-appropriate AI environment.</p>
+        </div>
+      </div>
+
+      <!-- Parents -->
+      <div class="card reveal" style="padding:24px; display:flex; align-items:center; gap:16px; cursor:default;">
+        <div class="role-chip" style="background:#E8F5E9;">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+        </div>
+        <div>
+          <h4 style="font-weight:700; color:var(--primary); font-size:15px; margin-bottom:4px;">Parents</h4>
+          <p style="font-size:12.5px; color:#6B7280; line-height:1.6;">See every question. Stay present even when distance makes it hard.</p>
+        </div>
+      </div>
+
+      <!-- Teachers -->
+      <div class="card reveal" style="padding:24px; display:flex; align-items:center; gap:16px; cursor:default;">
+        <div class="role-chip" style="background:#E3F2FD;">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#1565C0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+          </svg>
+        </div>
+        <div>
+          <h4 style="font-weight:700; color:var(--primary); font-size:15px; margin-bottom:4px;">Teachers</h4>
+          <p style="font-size:12.5px; color:#6B7280; line-height:1.6;">Insight into student curiosity, aligned with classroom learning.</p>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════
+     HOW JURNEEGO IS DIFFERENT  — white bg
+══════════════════════════════════════════ -->
+<section id="difference" style="background:white; padding:72px 28px;">
+  <div style="max-width:960px; margin:0 auto;">
+
+    <h2 class="reveal" style="font-size:clamp(1.6rem,2.8vw,2.1rem); font-weight:800; color:var(--primary); text-align:center; margin-bottom:10px; letter-spacing:-0.025em;">
+      How JurneeGo Is Different
+    </h2>
+    <p class="reveal" style="text-align:center; color:#6B7280; font-size:14.5px; max-width:560px; margin:0 auto 44px; line-height:1.75;">
+      Many children already have access to free, general-purpose AI tools. JurneeGo exists because learning — especially for children — requires different design choices.
+    </p>
+
+    <div class="reveal" style="overflow:hidden; border-radius:20px; border:1.5px solid var(--secondary); box-shadow:0 4px 24px rgba(10,61,60,0.1);">
+      <table style="width:100%; border-collapse:collapse;">
+        <thead>
+          <tr>
+            <th style="padding:16px 24px; background:white; border-bottom:1.5px solid var(--secondary); border-right:1.5px solid var(--secondary); width:34%;"></th>
+            <th style="padding:16px 20px; background:var(--secondary); color:var(--primary); font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:0.08em; border-bottom:1.5px solid var(--teal-mid); border-right:1.5px solid var(--teal-mid); text-align:center;">Free AI Tools</th>
+            <th style="padding:16px 24px; background:var(--primary); color:white; font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:0.08em; border-bottom:1.5px solid var(--primary-d); text-align:center;">JurneeGo</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-bottom:1px solid var(--secondary);">
+            <td style="padding:16px 24px; font-weight:700; color:var(--primary); font-size:13.5px; border-right:1.5px solid var(--secondary);">Designed for</td>
+            <td style="padding:16px 20px; color:#6B7280; font-size:13.5px; text-align:center; border-right:1.5px solid var(--secondary); background:#FAFAFA;">General use, mixed ages</td>
+            <td style="padding:16px 24px; color:white; font-size:13.5px; text-align:center; background:var(--primary); font-weight:600;">Children, with adults in the loop</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--secondary);">
+            <td style="padding:16px 24px; font-weight:700; color:var(--primary); font-size:13.5px; border-right:1.5px solid var(--secondary);">Response style</td>
+            <td style="padding:16px 20px; color:#6B7280; font-size:13.5px; text-align:center; border-right:1.5px solid var(--secondary); background:#FAFAFA;">Open-ended answers</td>
+            <td style="padding:16px 24px; color:white; font-size:13.5px; text-align:center; background:var(--primary); font-weight:600;">Age-appropriate guidance</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--secondary);">
+            <td style="padding:16px 24px; font-weight:700; color:var(--primary); font-size:13.5px; border-right:1.5px solid var(--secondary);">Adult visibility</td>
+            <td style="padding:16px 20px; color:#6B7280; font-size:13.5px; text-align:center; border-right:1.5px solid var(--secondary); background:#FAFAFA;">None by default</td>
+            <td style="padding:16px 24px; color:white; font-size:13.5px; text-align:center; background:var(--primary); font-weight:600;">Parent &amp; teacher oversight</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--secondary);">
+            <td style="padding:16px 24px; font-weight:700; color:var(--primary); font-size:13.5px; border-right:1.5px solid var(--secondary);">Learning focus</td>
+            <td style="padding:16px 20px; color:#6B7280; font-size:13.5px; text-align:center; border-right:1.5px solid var(--secondary); background:#FAFAFA;">Entertainment &amp; exploration</td>
+            <td style="padding:16px 24px; color:white; font-size:13.5px; text-align:center; background:var(--primary); font-weight:600;">Understanding &amp; growth</td>
+          </tr>
+          <tr>
+            <td style="padding:16px 24px; font-weight:700; color:var(--primary); font-size:13.5px; border-right:1.5px solid var(--secondary);">Educational context</td>
+            <td style="padding:16px 20px; color:#6B7280; font-size:13.5px; text-align:center; border-right:1.5px solid var(--secondary); background:#FAFAFA;">No learning goals</td>
+            <td style="padding:16px 24px; color:white; font-size:13.5px; text-align:center; background:var(--primary); font-weight:600;">Aligned to learning objectives</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════
+     FOOTER + WAITLIST  (dark teal)
+══════════════════════════════════════════ -->
+<footer id="waitlist" style="background:var(--primary); padding:72px 28px 36px; color:white;">
+  <div style="max-width:680px; margin:0 auto; text-align:center;">
+
+    <h2 class="reveal" style="font-size:clamp(1.7rem,3.2vw,2.2rem); font-weight:800; color:white; margin-bottom:8px; letter-spacing:-0.025em;">
+      Join the JurneeGo waitlist
+    </h2>
+    <p class="reveal" style="color:rgba(255,255,255,0.6); font-size:14.5px; margin-bottom:36px; line-height:1.7;">
+      Waitlist form to join the JurneeGo waitlist
+    </p>
+
+    <!-- Form -->
+    <form id="wl-form" class="reveal" style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-bottom:44px;"
+          onsubmit="handleWaitlist(event)" novalidate>
+      <input type="text"  id="wl-name"  name="first_name" placeholder="First name" class="wl-input" required autocomplete="given-name" style="min-width:160px; max-width:200px;" aria-label="First name"/>
+      <input type="email" id="wl-email" name="email"      placeholder="Email"      class="wl-input" required autocomplete="email"      style="min-width:200px; max-width:260px;" aria-label="Email address"/>
+      <button type="submit" class="btn-accent" style="white-space:nowrap;">Join waitlist</button>
+    </form>
+
+    <!-- Success -->
+    <div id="wl-success" style="display:none; margin-bottom:36px; padding:16px 24px; border-radius:14px; background:rgba(255,255,255,0.1); border:1.5px solid rgba(255,255,255,0.2);" role="alert" aria-live="polite">
+      <p style="color:white; font-weight:700; font-size:15px; margin-bottom:4px;">You're on the list!</p>
+      <p style="color:rgba(255,255,255,0.7); font-size:13.5px;">We'll reach out when JurneeGo is ready for you.</p>
+    </div>
+
+    <!-- Social links -->
+    <div class="reveal" style="display:flex; justify-content:center; gap:12px; margin-bottom:36px;">
+      <a href="#" aria-label="JurneeGo on YouTube"
+         style="width:42px; height:42px; border-radius:50%; background:rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; transition:background 0.18s; cursor:pointer;"
+         onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="white" aria-hidden="true"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+      </a>
+      <a href="#" aria-label="JurneeGo on Facebook"
+         style="width:42px; height:42px; border-radius:50%; background:rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; transition:background 0.18s; cursor:pointer;"
+         onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="white" aria-hidden="true"><path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/></svg>
+      </a>
+      <a href="#" aria-label="JurneeGo on LinkedIn"
+         style="width:42px; height:42px; border-radius:50%; background:rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; transition:background 0.18s; cursor:pointer;"
+         onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="white" aria-hidden="true"><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z"/><circle cx="4" cy="4" r="2" fill="white"/></svg>
+      </a>
+    </div>
+
+    <p style="font-size:11.5px; color:rgba(255,255,255,0.35);">© Copyright JurneeGo, Inc.</p>
+  </div>
+</footer>
+
+
+<script>
+  function toggleNav() {
+    const nav = document.getElementById('mobile-nav');
+    nav.style.display = nav.style.display === 'none' ? 'flex' : 'none';
+  }
+
+  function handleWaitlist(e) {
+    e.preventDefault();
+    const name  = document.getElementById('wl-name').value.trim();
+    const email = document.getElementById('wl-email').value.trim();
+    if (!name || !email) { alert('Please fill in all fields.'); return; }
+    document.getElementById('wl-form').style.display = 'none';
+    document.getElementById('wl-success').style.display = 'block';
+  }
+
+  // Smooth scroll
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', function(e) {
+      const href = this.getAttribute('href');
+      if (href === '#') return;
+      const target = document.querySelector(href);
+      if (target) { e.preventDefault(); target.scrollIntoView({ behavior: 'smooth' }); }
+    });
+  });
+
+  // Reveal on scroll
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(en => {
+      if (en.isIntersecting) { en.target.classList.add('visible'); io.unobserve(en.target); }
+    });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+  // Reduced motion
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    document.querySelectorAll('.reveal').forEach(el => {
+      el.style.opacity = '1'; el.style.transform = 'none';
+      el.style.transition = 'none'; el.classList.add('visible');
+    });
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+# Ignore everything
+*
+
+# Except these HTML files
+!jurneego-redesign-v2.html
+!jurneego-redesign-v3.html
+!jurneego-redesign-v4.html
+!.gitignore

@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JurneeGo — Safe AI for Curious Kids</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Lora:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Plus Jakarta Sans', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+            serif: ['Lora', 'Georgia', 'serif'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+
+    :root {
+      --teal:        #1A535C;
+      --teal-dark:   #134049;
+      --teal-light:  #E6F4F1;
+      --teal-mid:    #D0ECEC;
+      --mint:        #4ECDC4;
+      --orange:      #F4845F;
+      --orange-soft: #FFF0EB;
+      --text-dark:   #111827;
+      --text-mid:    #374151;
+      --text-muted:  #6B7280;
+      --border:      #E5E7EB;
+      --bg:          #FFFFFF;
+      --bg-soft:     #F9FAFB;
+      --bg-teal:     #F0F9F8;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text-dark);
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.6;
+    }
+
+    /* ── Typography ── */
+    .heading-display {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 800;
+      line-height: 1.08;
+      letter-spacing: -0.03em;
+      color: var(--text-dark);
+    }
+    .heading-section {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 700;
+      line-height: 1.15;
+      letter-spacing: -0.025em;
+      color: var(--text-dark);
+    }
+
+    /* ── Navbar ── */
+    .navbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      background: rgba(255,255,255,0.96);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* ── Buttons ── */
+    .btn-teal {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 13px 28px;
+      background: var(--teal);
+      color: white;
+      font-weight: 700;
+      font-size: 15px;
+      border-radius: 100px;
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.18s ease, transform 0.15s ease;
+    }
+    .btn-teal:hover { background: var(--teal-dark); transform: translateY(-1px); }
+    .btn-teal:active { transform: translateY(0); }
+
+    .btn-outline {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 28px;
+      background: transparent;
+      color: var(--teal);
+      font-weight: 700;
+      font-size: 15px;
+      border-radius: 100px;
+      border: 2px solid var(--teal);
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.18s ease;
+    }
+    .btn-outline:hover { background: var(--teal-light); }
+
+    .btn-orange {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 13px 28px;
+      background: var(--orange);
+      color: white;
+      font-weight: 700;
+      font-size: 15px;
+      border-radius: 100px;
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.18s ease, transform 0.15s ease;
+    }
+    .btn-orange:hover { background: #e96b44; transform: translateY(-1px); }
+
+    /* ── Cards ── */
+    .card {
+      background: white;
+      border: 1.5px solid var(--border);
+      border-radius: 24px;
+      transition: box-shadow 0.2s ease, transform 0.2s ease;
+    }
+    .card:hover {
+      box-shadow: 0 8px 32px rgba(26,83,92,0.10);
+      transform: translateY(-2px);
+    }
+
+    .card-teal {
+      background: var(--teal);
+      border-radius: 24px;
+    }
+
+    .card-soft {
+      background: var(--bg-teal);
+      border: 1.5px solid var(--teal-mid);
+      border-radius: 24px;
+      transition: box-shadow 0.2s ease, transform 0.2s ease;
+    }
+    .card-soft:hover {
+      box-shadow: 0 8px 32px rgba(26,83,92,0.08);
+      transform: translateY(-2px);
+    }
+
+    /* ── Pill / Tag ── */
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 14px;
+      background: var(--teal-light);
+      color: var(--teal);
+      font-size: 12px;
+      font-weight: 700;
+      border-radius: 100px;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+    .tag-orange {
+      background: var(--orange-soft);
+      color: #c0442c;
+    }
+
+    /* ── Hero ── */
+    .hero-bg {
+      background: linear-gradient(150deg, #f0faf9 0%, #e9f6f5 50%, #fef9f5 100%);
+    }
+
+    /* ── 3D shapes SVG blobs ── */
+    .shape-cluster {
+      position: relative;
+      width: 100%;
+      max-width: 480px;
+    }
+
+    /* ── Step number ── */
+    .step-num {
+      width: 30px;
+      height: 30px;
+      min-width: 30px;
+      border-radius: 50%;
+      background: var(--teal);
+      color: white;
+      font-weight: 800;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ── Icon box ── */
+    .icon-box {
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--teal-light);
+      border: 1.5px solid var(--teal-mid);
+    }
+
+    /* ── UbD table ── */
+    .ubd-table tr { transition: background 0.15s ease; }
+    .ubd-table tbody tr:hover td { background: var(--bg-teal); }
+
+    /* ── Form ── */
+    .field {
+      width: 100%;
+      padding: 13px 16px;
+      background: var(--bg-soft);
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--text-dark);
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .field:focus {
+      background: white;
+      border-color: var(--teal);
+      box-shadow: 0 0 0 3px rgba(26,83,92,0.1);
+    }
+    .field::placeholder { color: #9CA3AF; }
+
+    /* ── Comparison table ── */
+    .comp-table td, .comp-table th { vertical-align: middle; }
+
+    /* ── Divider ── */
+    .section-divider { border: none; border-top: 1px solid var(--border); }
+
+    /* ── Reveal animation ── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.55s ease, transform 0.55s ease;
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ── Responsive ── */
+    section { scroll-margin-top: 80px; }
+
+    @media (max-width: 640px) {
+      .hero-h1 { font-size: 2.6rem !important; }
+      .section-h2 { font-size: 2rem !important; }
+    }
+
+    @media (max-width: 768px) {
+      .nav-links { display: none !important; }
+      .nav-mobile-btn { display: flex !important; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════
+     NAVBAR
+════════════════════════════════════ -->
+<header class="navbar" role="banner">
+  <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+
+    <a href="#" class="flex items-center" aria-label="JurneeGo home">
+      <img src="https://jurneego.ai/assets/jurneego-logo.png" alt="JurneeGo" style="height:38px; width:auto;" />
+    </a>
+
+    <nav class="nav-links flex items-center gap-8" aria-label="Primary navigation">
+      <a href="#how-it-works" class="text-sm font-600 text-gray-600 hover:text-teal-800 transition-colors" style="font-weight:600;">How It Works</a>
+      <a href="#who-its-for"  class="text-sm font-600 text-gray-600 hover:text-teal-800 transition-colors" style="font-weight:600;">Who It's For</a>
+      <a href="#difference"   class="text-sm font-600 text-gray-600 hover:text-teal-800 transition-colors" style="font-weight:600;">Insights</a>
+      <a href="#waitlist"     class="btn-teal" style="padding:10px 22px; font-size:14px;">Waitlist</a>
+    </nav>
+
+    <button id="nav-toggle" class="nav-mobile-btn hidden items-center justify-center w-10 h-10 rounded-xl hover:bg-gray-100 transition-colors" aria-label="Open menu" onclick="toggleNav()">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1A535C" stroke-width="2.5" stroke-linecap="round">
+        <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Mobile menu -->
+  <div id="mobile-nav" class="hidden border-t border-gray-100 bg-white px-6 py-4 flex flex-col gap-1">
+    <a href="#how-it-works" class="py-2.5 px-3 rounded-lg text-sm font-600 text-gray-700 hover:bg-gray-50" style="font-weight:600;" onclick="toggleNav()">How It Works</a>
+    <a href="#who-its-for"  class="py-2.5 px-3 rounded-lg text-sm font-600 text-gray-700 hover:bg-gray-50" style="font-weight:600;" onclick="toggleNav()">Who It's For</a>
+    <a href="#difference"   class="py-2.5 px-3 rounded-lg text-sm font-600 text-gray-700 hover:bg-gray-50" style="font-weight:600;" onclick="toggleNav()">Insights</a>
+    <a href="#waitlist" class="mt-2 btn-teal justify-center text-center" onclick="toggleNav()">Join Waitlist</a>
+  </div>
+</header>
+
+
+<!-- ════════════════════════════════════
+     HERO
+════════════════════════════════════ -->
+<section class="hero-bg pt-32 pb-20 px-6 overflow-hidden" id="hero" aria-labelledby="hero-h1">
+  <div class="max-w-7xl mx-auto">
+    <div class="grid grid-cols-1 lg:grid-cols-[1.1fr_1fr] gap-12 lg:gap-16 items-center">
+
+      <!-- Copy -->
+      <div class="reveal">
+        <h1 id="hero-h1" class="heading-display hero-h1 mb-6" style="font-size:3.75rem;">
+          Safe AI for curious kids.<br />
+          <span style="color:#374151; font-size:3.1rem;">A window into their world<br />for parents.</span>
+        </h1>
+
+        <p class="text-lg mb-9 max-w-lg" style="color:#4B5563; font-weight:500; line-height:1.75;">
+          JurneeGo helps children explore questions safely with AI — while parents and teachers remain visibly present in the learning journey.
+        </p>
+
+        <div class="flex flex-wrap gap-3 mb-10">
+          <a href="#waitlist" class="btn-teal">
+            Join the waitlist
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </a>
+          <a href="#how-it-works" class="btn-outline">See how it works</a>
+        </div>
+
+        <!-- Trust bar -->
+        <div class="flex flex-wrap items-center gap-6">
+          <div class="flex items-center gap-2.5">
+            <div class="flex -space-x-1.5">
+              <div class="w-8 h-8 rounded-full border-2 border-white flex items-center justify-center text-xs font-bold" style="background:#D0ECEC; color:#1A535C;">P</div>
+              <div class="w-8 h-8 rounded-full border-2 border-white flex items-center justify-center text-xs font-bold" style="background:#FFE4D9; color:#c0442c;">T</div>
+              <div class="w-8 h-8 rounded-full border-2 border-white flex items-center justify-center text-xs font-bold" style="background:#D0ECEC; color:#1A535C;">K</div>
+            </div>
+            <span class="text-sm" style="color:#6B7280; font-weight:600;">500+ families waiting</span>
+          </div>
+          <div class="flex items-center gap-1">
+            <span style="color:#FBBF24; font-size:15px;">★★★★★</span>
+            <span class="text-sm" style="color:#6B7280; font-weight:600;">4.9 from early users</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Visual: 3D shapes illustration (matching jurneego.ai prototype) -->
+      <div class="relative flex justify-center items-center reveal" style="animation-delay:0.15s; min-height:420px;">
+
+        <!-- 3D Sphere cluster — rendered SVG with realistic lighting/shading -->
+        <div class="absolute inset-0 pointer-events-none select-none overflow-hidden" aria-hidden="true">
+          <svg width="100%" height="100%" viewBox="0 0 520 480" fill="none" xmlns="http://www.w3.org/2000/svg"
+               style="position:absolute; top:0; right:-20px; width:100%; height:100%;">
+            <defs>
+              <!-- Large teal sphere gradient -->
+              <radialGradient id="rg-teal" cx="38%" cy="32%" r="62%">
+                <stop offset="0%"   stop-color="#7ECECA"/>
+                <stop offset="45%"  stop-color="#2A8A8F"/>
+                <stop offset="100%" stop-color="#0E4A52"/>
+              </radialGradient>
+              <!-- Medium dark teal -->
+              <radialGradient id="rg-dteal" cx="38%" cy="32%" r="62%">
+                <stop offset="0%"   stop-color="#4AABB0"/>
+                <stop offset="50%"  stop-color="#1A6B74"/>
+                <stop offset="100%" stop-color="#0B3D44"/>
+              </radialGradient>
+              <!-- Small navy sphere -->
+              <radialGradient id="rg-navy" cx="38%" cy="30%" r="62%">
+                <stop offset="0%"   stop-color="#7A9DBF"/>
+                <stop offset="50%"  stop-color="#2C5282"/>
+                <stop offset="100%" stop-color="#1A3558"/>
+              </radialGradient>
+              <!-- Beige/cream sphere -->
+              <radialGradient id="rg-beige" cx="38%" cy="32%" r="62%">
+                <stop offset="0%"   stop-color="#F5ECD8"/>
+                <stop offset="50%"  stop-color="#D9C7A3"/>
+                <stop offset="100%" stop-color="#B8A07A"/>
+              </radialGradient>
+              <!-- Small mint sphere -->
+              <radialGradient id="rg-mint" cx="38%" cy="32%" r="62%">
+                <stop offset="0%"   stop-color="#B8F0EE"/>
+                <stop offset="50%"  stop-color="#5DD6D1"/>
+                <stop offset="100%" stop-color="#2AADA8"/>
+              </radialGradient>
+              <!-- Drop shadows -->
+              <filter id="drop1" x="-20%" y="-20%" width="140%" height="140%">
+                <feDropShadow dx="4" dy="12" stdDeviation="14" flood-color="#0d2b28" flood-opacity="0.22"/>
+              </filter>
+              <filter id="drop2" x="-20%" y="-20%" width="140%" height="140%">
+                <feDropShadow dx="3" dy="8" stdDeviation="10" flood-color="#0d2b28" flood-opacity="0.18"/>
+              </filter>
+              <filter id="drop3" x="-20%" y="-20%" width="140%" height="140%">
+                <feDropShadow dx="2" dy="6" stdDeviation="8" flood-color="#0d2b28" flood-opacity="0.15"/>
+              </filter>
+            </defs>
+
+            <!-- ── Spheres ── -->
+            <!-- Large teal sphere (top-right) -->
+            <circle cx="330" cy="145" r="118" fill="url(#rg-teal)" filter="url(#drop1)"/>
+            <!-- Specular highlight -->
+            <ellipse cx="295" cy="105" rx="38" ry="24" fill="rgba(255,255,255,0.22)" transform="rotate(-20 295 105)"/>
+
+            <!-- Medium dark teal (left-center) -->
+            <circle cx="172" cy="248" r="76" fill="url(#rg-dteal)" filter="url(#drop2)"/>
+            <ellipse cx="150" cy="222" rx="22" ry="14" fill="rgba(255,255,255,0.18)" transform="rotate(-15 150 222)"/>
+
+            <!-- Small navy sphere (bottom-left) -->
+            <circle cx="112" cy="358" r="52" fill="url(#rg-navy)" filter="url(#drop3)"/>
+            <ellipse cx="98"  cy="341" rx="14" ry="9"  fill="rgba(255,255,255,0.16)" transform="rotate(-15 98 341)"/>
+
+            <!-- Beige cream sphere (bottom-right) -->
+            <circle cx="408" cy="362" r="88" fill="url(#rg-beige)" filter="url(#drop2)"/>
+            <ellipse cx="378" cy="334" rx="26" ry="17" fill="rgba(255,255,255,0.35)" transform="rotate(-20 378 334)"/>
+
+            <!-- Small mint sphere (far right) -->
+            <circle cx="472" cy="205" r="44" fill="url(#rg-mint)" filter="url(#drop3)"/>
+            <ellipse cx="458" cy="191" rx="13" ry="8"  fill="rgba(255,255,255,0.25)" transform="rotate(-15 458 191)"/>
+
+            <!-- ── Geometric shapes ── -->
+            <!-- Teal rectangular block (bottom-center) -->
+            <g filter="url(#drop3)" transform="translate(220,340) rotate(-12)">
+              <!-- Top face -->
+              <polygon points="0,-18 52,-18 52,0 0,0" fill="#2A8A8F" opacity="0.95"/>
+              <!-- Front face -->
+              <rect x="0" y="0" width="52" height="32" fill="#1A535C" rx="3"/>
+              <!-- Side face -->
+              <polygon points="52,-18 68,-8 68,24 52,32" fill="#0E3D44" opacity="0.9"/>
+            </g>
+
+            <!-- ── Connector stems (like on jurneego.ai prototype) ── -->
+            <path d="M330 30 Q340 10 355 5" stroke="#C8B89A" stroke-width="3.5" stroke-linecap="round" fill="none" opacity="0.7"/>
+            <circle cx="355" cy="5"  r="5" fill="#C8B89A" opacity="0.7"/>
+
+            <path d="M410 278 Q422 295 428 312" stroke="#C8B89A" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.6"/>
+
+            <!-- ── Brain-like organic shape (top decoration, like prototype) ── -->
+            <g transform="translate(390, 48) scale(0.7)" opacity="0.88" filter="url(#drop3)">
+              <!-- Brain silhouette using paths -->
+              <path d="M40 55 C22 55 10 45 10 32 C10 22 18 14 28 12 C26 6 32 2 38 4 C42 1 48 3 50 8 C58 6 66 12 66 22 C74 22 80 30 78 40 C80 48 74 56 66 58 C64 66 56 70 48 68 C44 74 34 74 30 68 C22 68 16 62 18 56 C16 60 8 58 8 52 C6 44 14 38 22 40 Z" fill="url(#rg-beige)" stroke="rgba(180,160,120,0.4)" stroke-width="1"/>
+              <!-- Brain crease lines -->
+              <path d="M30 20 Q40 28 35 40" stroke="rgba(150,130,90,0.35)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+              <path d="M50 15 Q58 25 52 38" stroke="rgba(150,130,90,0.35)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+              <path d="M25 42 Q32 50 28 58" stroke="rgba(150,130,90,0.3)"  stroke-width="1.5" fill="none" stroke-linecap="round"/>
+              <path d="M48 42 Q55 50 50 60" stroke="rgba(150,130,90,0.3)"  stroke-width="1.5" fill="none" stroke-linecap="round"/>
+            </g>
+          </svg>
+        </div>
+
+        <!-- Floating stats (keep these) -->
+        <div class="card absolute top-4 right-4 lg:right-0 px-4 py-3 text-center z-20">
+          <div class="font-800 text-xl" style="color:#1A535C;">100%</div>
+          <div class="text-xs font-600" style="color:#6B7280;">Child-safe</div>
+        </div>
+        <div class="card absolute bottom-4 left-4 lg:left-0 px-4 py-3 text-center z-20">
+          <div class="font-800 text-xl" style="color:#F4845F;">SSA™</div>
+          <div class="text-xs font-600" style="color:#6B7280;">Patent filed</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════════
+     HOW IT WORKS / SSA
+════════════════════════════════════ -->
+<section id="how-it-works" class="py-24 px-6 bg-white" aria-labelledby="ssa-h2">
+  <div class="max-w-7xl mx-auto">
+
+    <div class="mb-14 reveal">
+      <span class="tag mb-4">How It Works</span>
+      <h2 id="ssa-h2" class="heading-section section-h2 mb-3" style="font-size:2.5rem;">How JurneeGo works</h2>
+      <p class="text-lg max-w-xl" style="color:#4B5563; font-weight:500;">
+        Built on a <strong style="color:#1A535C;">Shared Session Architecture (SSA).</strong> Patent filed.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+
+      <!-- Card 1: Shared learning -->
+      <div class="card p-10 reveal">
+        <div class="icon-box mb-6">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1A535C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <h3 class="font-bold text-xl mb-4" style="color:#111827; letter-spacing:-0.02em;">Shared learning, by design</h3>
+        <p class="mb-7" style="color:#4B5563; font-weight:500; line-height:1.75;">
+          Most AI tools are built for one person. JurneeGo is built for shared learning. A child's AI conversation can be mirrored to parents and teachers in real time.
+        </p>
+        <ul class="space-y-3">
+          <li class="flex items-start gap-3">
+            <span class="step-num flex-shrink-0 mt-0.5">1</span>
+            <span style="color:#374151; font-weight:500; font-size:15px;">Child asks a question in a moderated AI chat</span>
+          </li>
+          <li class="flex items-start gap-3">
+            <span class="step-num flex-shrink-0 mt-0.5">2</span>
+            <span style="color:#374151; font-weight:500; font-size:15px;">AI responds safely and age-appropriately</span>
+          </li>
+          <li class="flex items-start gap-3">
+            <span class="step-num flex-shrink-0 mt-0.5">3</span>
+            <span style="color:#374151; font-weight:500; font-size:15px;">Parents see the conversation in real-time</span>
+          </li>
+          <li class="flex items-start gap-3">
+            <span class="step-num flex-shrink-0 mt-0.5">4</span>
+            <span style="color:#374151; font-weight:500; font-size:15px;">Presence is active — no silent monitoring</span>
+          </li>
+          <li class="flex items-start gap-3">
+            <span class="step-num flex-shrink-0 mt-0.5">5</span>
+            <span style="color:#374151; font-weight:500; font-size:15px;">Adults guide through annotations, not overrides</span>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Card 2: Why SSA -->
+      <div class="card-teal p-10 flex flex-col reveal" style="animation-delay:0.1s;">
+        <div class="icon-box mb-6" style="background:rgba(255,255,255,0.15); border-color:rgba(255,255,255,0.2);">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <h3 class="font-bold text-xl mb-4" style="color:white; letter-spacing:-0.02em;">Why SSA matters</h3>
+        <p class="mb-5" style="color:rgba(255,255,255,0.82); font-weight:500; line-height:1.75;">
+          SSA replaces black-box AI with transparency and trust. Children keep agency. Adults stay meaningfully involved. Learning stays collaborative.
+        </p>
+        <p class="mb-8" style="color:rgba(255,255,255,0.82); font-weight:500; line-height:1.75;">
+          Designed with consent, auditability, and alignment with leading child protection frameworks from day one.
+        </p>
+
+        <div class="grid grid-cols-2 gap-3 mb-8">
+          <div class="rounded-xl p-3 text-center" style="background:rgba(255,255,255,0.12);">
+            <span class="font-700 text-sm" style="color:white;">Transparent</span>
+          </div>
+          <div class="rounded-xl p-3 text-center" style="background:rgba(255,255,255,0.12);">
+            <span class="font-700 text-sm" style="color:white;">Collaborative</span>
+          </div>
+          <div class="rounded-xl p-3 text-center" style="background:rgba(255,255,255,0.12);">
+            <span class="font-700 text-sm" style="color:white;">Age-Appropriate</span>
+          </div>
+          <div class="rounded-xl p-3 text-center" style="background:rgba(255,255,255,0.12);">
+            <span class="font-700 text-sm" style="color:white;">Auditable</span>
+          </div>
+        </div>
+
+        <a href="#waitlist" class="btn-orange mt-auto self-start">
+          Experience SSA
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+      </div>
+    </div>
+
+    <!-- ── UbD table ── -->
+    <div class="card overflow-hidden reveal" style="animation-delay:0.2s;">
+      <div class="grid grid-cols-1 md:grid-cols-[90px_1fr]">
+        <!-- Accent sidebar -->
+        <div class="hidden md:flex flex-col items-center justify-center gap-8 py-10" style="background:#1A535C;">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="rgba(255,255,255,0.55)" aria-hidden="true"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="rgba(255,255,255,0.55)" aria-hidden="true"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+        </div>
+        <!-- Content -->
+        <div class="p-8 lg:p-12">
+          <p class="text-sm font-600 mb-8" style="color:#6B7280; max-width:680px;">
+            Watch How JurneeGo's Shared Session Architecture keeps children, parents, and teachers connected.
+          </p>
+          <div class="overflow-x-auto">
+            <table class="w-full ubd-table" role="table" aria-label="UbD Framework elements">
+              <thead>
+                <tr style="border-bottom:2px solid #F3F4F6;">
+                  <th class="pb-4 text-left pr-6" style="font-size:11px; font-weight:800; color:#1A535C; text-transform:uppercase; letter-spacing:0.1em; white-space:nowrap;">UbD Element</th>
+                  <th class="pb-4 text-left pl-8" style="font-size:11px; font-weight:800; color:#1A535C; text-transform:uppercase; letter-spacing:0.1em;">Example</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr style="border-bottom:1px solid #F3F4F6;">
+                  <td class="py-5 pr-6" style="vertical-align:top; white-space:nowrap;">
+                    <div class="flex items-center gap-3">
+                      <span class="step-num" style="min-width:28px; width:28px; height:28px; font-size:12px;">1</span>
+                      <span class="font-700" style="color:#111827; font-size:14px;">Long-Term Goal</span>
+                    </div>
+                  </td>
+                  <td class="py-5 pl-8" style="color:#4B5563; font-size:14px; font-weight:500; vertical-align:top; line-height:1.65;">
+                    Develops curiosity and foundational understanding of how technology shapes the world.
+                  </td>
+                </tr>
+                <tr style="border-bottom:1px solid #F3F4F6;">
+                  <td class="py-5 pr-6" style="vertical-align:top; white-space:nowrap;">
+                    <div class="flex items-center gap-3">
+                      <span class="step-num" style="min-width:28px; width:28px; height:28px; font-size:12px;">2</span>
+                      <span class="font-700" style="color:#111827; font-size:14px;">Enduring Understanding</span>
+                    </div>
+                  </td>
+                  <td class="py-5 pl-8" style="color:#4B5563; font-size:14px; font-weight:500; vertical-align:top; line-height:1.65;">
+                    Technology is designed by people and can be questioned, improved, and aligned with values.
+                  </td>
+                </tr>
+                <tr style="border-bottom:1px solid #F3F4F6;">
+                  <td class="py-5 pr-6" style="vertical-align:top; white-space:nowrap;">
+                    <div class="flex items-center gap-3">
+                      <span class="step-num" style="min-width:28px; width:28px; height:28px; font-size:12px;">3</span>
+                      <span class="font-700" style="color:#111827; font-size:14px;">Essential Questions</span>
+                    </div>
+                  </td>
+                  <td class="py-5 pl-8" style="color:#4B5563; font-size:14px; font-weight:500; vertical-align:top; line-height:1.65;">
+                    How do computers "think"? Why do we design rules for technology?
+                  </td>
+                </tr>
+                <tr style="border-bottom:1px solid #F3F4F6;">
+                  <td class="py-5 pr-6" style="vertical-align:top; white-space:nowrap;">
+                    <div class="flex items-center gap-3">
+                      <span class="step-num" style="min-width:28px; width:28px; height:28px; font-size:12px;">4</span>
+                      <span class="font-700" style="color:#111827; font-size:14px;">Daily Interactions</span>
+                    </div>
+                  </td>
+                  <td class="py-5 pl-8" style="color:#4B5563; font-size:14px; font-weight:500; vertical-align:top; line-height:1.65;">
+                    Guided conversations with AI that build on these questions over time.
+                  </td>
+                </tr>
+                <tr>
+                  <td class="py-5 pr-6" style="vertical-align:top; white-space:nowrap;">
+                    <div class="flex items-center gap-3">
+                      <span class="step-num" style="min-width:28px; width:28px; height:28px; font-size:12px;">5</span>
+                      <span class="font-700" style="color:#111827; font-size:14px;">Adult Guidance</span>
+                    </div>
+                  </td>
+                  <td class="py-5 pl-8" style="color:#4B5563; font-size:14px; font-weight:500; vertical-align:top; line-height:1.65;">
+                    Parent and teacher annotations that connect curiosity to bigger ideas.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════════
+     VIDEO SHOWCASE
+════════════════════════════════════ -->
+<section class="py-20 px-6" style="background:#F0F9F8;" id="video" aria-labelledby="video-h2">
+  <div class="max-w-4xl mx-auto text-center">
+    <div class="reveal">
+      <span class="tag mb-4">Product Demo</span>
+      <h2 id="video-h2" class="heading-section section-h2 mb-3" style="font-size:2.2rem;">See JurneeGo in Action</h2>
+      <p class="text-base mb-10 max-w-lg mx-auto" style="color:#4B5563; font-weight:500;">
+        Watch how the Shared Session Architecture connects children, parents, and teachers in real time.
+      </p>
+    </div>
+
+    <div class="card p-3 reveal" style="animation-delay:0.1s;">
+      <a href="https://www.youtube.com/watch?v=FCNj6kbsdR4" target="_blank" rel="noopener noreferrer"
+         class="block rounded-2xl overflow-hidden relative" style="aspect-ratio:16/9; background:#0d2b28; cursor:pointer;"
+         aria-label="Watch JurneeGo product demo on YouTube"
+         onmouseover="this.querySelector('.play-btn').style.transform='scale(1.1)'; this.querySelector('img').style.transform='scale(1.04)'"
+         onmouseout="this.querySelector('.play-btn').style.transform='scale(1)'; this.querySelector('img').style.transform='scale(1)'">
+
+        <!-- YouTube thumbnail -->
+        <img
+          src="https://img.youtube.com/vi/FCNj6kbsdR4/maxresdefault.jpg"
+          alt="JurneeGo product demo video thumbnail"
+          onerror="this.src='https://img.youtube.com/vi/FCNj6kbsdR4/hqdefault.jpg'"
+          style="width:100%; height:100%; object-fit:cover; display:block; transition:transform 0.3s ease;"
+        />
+
+        <!-- Dark overlay -->
+        <div class="absolute inset-0" style="background:rgba(0,0,0,0.22);"></div>
+
+        <!-- Play button -->
+        <div class="play-btn absolute inset-0 flex items-center justify-center" style="transition:transform 0.2s ease;">
+          <div class="flex items-center justify-center rounded-full"
+               style="width:72px; height:72px; background:rgba(255,255,255,0.95); box-shadow:0 4px 24px rgba(0,0,0,0.25);">
+            <svg width="30" height="30" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" fill="#FF0000"/>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Bottom label -->
+        <div class="absolute bottom-0 left-0 right-0 px-5 py-4 flex items-center justify-between"
+             style="background:linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 100%);">
+          <span class="text-white text-sm font-600">JurneeGo — Product Overview</span>
+          <span class="flex items-center gap-1.5 text-xs font-600" style="color:rgba(255,255,255,0.8);">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="white" aria-hidden="true"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+            Watch on YouTube
+          </span>
+        </div>
+      </a>
+    </div>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════════
+     THREE CONNECTED ROLES
+════════════════════════════════════ -->
+<section id="who-its-for" class="py-24 px-6 bg-white" aria-labelledby="roles-h2">
+  <div class="max-w-7xl mx-auto">
+
+    <div class="mb-14 reveal">
+      <h2 id="roles-h2" class="heading-section section-h2 mb-3" style="font-size:2.5rem;">One platform, three connected roles</h2>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+
+      <!-- Children -->
+      <div class="card-soft p-10 reveal">
+        <div class="icon-box mb-5">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1A535C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </div>
+        <h3 class="font-700 text-xl mb-3" style="color:#111827; letter-spacing:-0.02em;">Children</h3>
+        <p style="color:#4B5563; font-weight:500; line-height:1.75;">Ask questions freely in a safe, age-appropriate AI environment.</p>
+      </div>
+
+      <!-- Parents -->
+      <div class="card p-10 reveal" style="animation-delay:0.1s; background:#FFF7F4; border-color:#FECAB6;">
+        <div class="icon-box mb-5" style="background:#FFF0EB; border-color:#FECAB6;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#E07A5F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <h3 class="font-700 text-xl mb-3" style="color:#111827; letter-spacing:-0.02em;">Parents</h3>
+        <p style="color:#4B5563; font-weight:500; line-height:1.75;">See every question. Stay present even when distance makes it most.</p>
+      </div>
+
+      <!-- Teachers -->
+      <div class="card p-10 reveal" style="animation-delay:0.2s; background:#F0F6FF; border-color:#BFDBFE;">
+        <div class="icon-box mb-5" style="background:#EFF6FF; border-color:#BFDBFE;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+        </div>
+        <h3 class="font-700 text-xl mb-3" style="color:#111827; letter-spacing:-0.02em;">Teachers</h3>
+        <p style="color:#4B5563; font-weight:500; line-height:1.75;">Insight into student curiosity, aligned with classroom learning.</p>
+      </div>
+    </div>
+
+    <!-- Safety callout -->
+    <div class="reveal" style="animation-delay:0.15s; background:linear-gradient(135deg, #1A535C 0%, #134049 100%); border-radius:20px; padding:28px 32px; display:flex; align-items:flex-start; gap:20px; box-shadow:0 8px 32px rgba(26,83,92,0.25);">
+      <div style="width:48px; height:48px; min-width:48px; border-radius:14px; background:rgba(255,255,255,0.15); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </div>
+      <div>
+        <h4 style="font-weight:700; font-size:16px; color:white; margin-bottom:6px;">Safety &amp; Guardrails</h4>
+        <p style="color:rgba(255,255,255,0.8); font-weight:500; line-height:1.75; font-size:14.5px;">JurneeGo is built specifically for children's learning — with parents and teachers meaningfully in the loop. Safety is not an add-on. It is the foundation of how learning happens.</p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════════
+     HOW JURNEEGO IS DIFFERENT
+════════════════════════════════════ -->
+<section id="difference" class="py-24 px-6" style="background:#F9FAFB;" aria-labelledby="diff-h2">
+  <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-[1.15fr_1fr] gap-16 lg:gap-20 items-start">
+
+    <!-- Left -->
+    <div class="reveal">
+      <span class="tag mb-4">Why JurneeGo</span>
+      <h2 id="diff-h2" class="heading-section section-h2 mb-5" style="font-size:2.5rem;">How JurneeGo Is Different</h2>
+      <p class="text-base mb-10" style="color:#4B5563; font-weight:500; line-height:1.8; max-width:520px;">
+        Many children already have access to free general-purpose AI tools. JurneeGo is different because learning — especially for children — requires different design choices.
+      </p>
+
+      <div class="card overflow-hidden" style="border-radius:20px;">
+        <table class="w-full comp-table" role="table" aria-label="JurneeGo vs Free AI Tools">
+          <thead>
+            <tr>
+              <th class="p-5 text-left" style="background:#334155; color:white; font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:0.1em;"></th>
+              <th class="p-5 text-center" style="background:#334155; color:rgba(255,255,255,0.65); font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:0.1em; border-right:1px solid rgba(255,255,255,0.08);">Free AI Tools</th>
+              <th class="p-5 text-center" style="background:#1A535C; color:white; font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:0.1em;">JurneeGo</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            <tr>
+              <td class="p-5 font-600 text-sm" style="color:#111827;">Designed for children</td>
+              <td class="p-5 text-center border-r border-gray-100">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="#E5E7EB" style="margin:0 auto;" aria-label="No"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+              </td>
+              <td class="p-5 text-center" style="background:rgba(26,83,92,0.03);">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="#16a34a" style="margin:0 auto;" aria-label="Yes"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+              </td>
+            </tr>
+            <tr>
+              <td class="p-5 font-600 text-sm" style="color:#111827;">Response style</td>
+              <td class="p-5 text-center border-r border-gray-100">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="#E5E7EB" style="margin:0 auto;" aria-label="No"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+              </td>
+              <td class="p-5 text-center" style="background:rgba(26,83,92,0.03);">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="#16a34a" style="margin:0 auto;" aria-label="Yes"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+              </td>
+            </tr>
+            <tr>
+              <td class="p-5 font-600 text-sm" style="color:#111827;">Adult visibility</td>
+              <td class="p-5 text-center border-r border-gray-100">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="#E5E7EB" style="margin:0 auto;" aria-label="No"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+              </td>
+              <td class="p-5 text-center" style="background:rgba(26,83,92,0.03);">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="#16a34a" style="margin:0 auto;" aria-label="Yes"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+              </td>
+            </tr>
+            <tr>
+              <td class="p-5 font-600 text-sm" style="color:#111827;">Learning focus</td>
+              <td class="p-5 text-center border-r border-gray-100">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="#D1D5DB" style="margin:0 auto;" aria-label="Partial"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+              </td>
+              <td class="p-5 text-center" style="background:rgba(26,83,92,0.03);">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="#16a34a" style="margin:0 auto;" aria-label="Yes"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+              </td>
+            </tr>
+            <tr>
+              <td class="p-5 font-600 text-sm" style="color:#111827;">Educational context (SSA)</td>
+              <td class="p-5 text-center border-r border-gray-100">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="#E5E7EB" style="margin:0 auto;" aria-label="No"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+              </td>
+              <td class="p-5 text-center" style="background:rgba(26,83,92,0.03);">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="#16a34a" style="margin:0 auto;" aria-label="Yes"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Right: waitlist form -->
+    <div class="card p-9 reveal" style="animation-delay:0.1s;">
+      <h3 class="heading-section mb-2" style="font-size:1.75rem;">Join the JurneeGo waitlist</h3>
+      <p class="mb-7" style="color:#4B5563; font-weight:500;">We're inviting parents, teachers, and schools to help shape the first release.</p>
+
+      <form id="waitlist-form" class="space-y-4" onsubmit="handleWaitlist(event)" novalidate>
+        <input type="text" id="wl-name" name="full_name" placeholder="Full name" class="field" required autocomplete="name" aria-label="Full name" />
+        <input type="email" id="wl-email" name="email" placeholder="Email" class="field" required autocomplete="email" aria-label="Email address" />
+        <select id="wl-role" name="role" class="field" required aria-label="Role"
+          style="cursor:pointer; appearance:none; background-image:url('data:image/svg+xml;charset=utf-8,<svg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 20 20%22><path stroke=%22%231A535C%22 stroke-width=%221.5%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 d=%22M6 8l4 4 4-4%22/></svg>'); background-repeat:no-repeat; background-position:right 14px center; background-size:20px; padding-right:44px;">
+          <option value="" disabled selected>Role and employment</option>
+          <option value="parent">Parent</option>
+          <option value="teacher">Teacher / Educator</option>
+          <option value="school">School Administrator</option>
+          <option value="other">Other</option>
+        </select>
+        <button type="submit" class="btn-teal w-full justify-center" style="padding:14px 28px; font-size:16px; margin-top:4px;">
+          Join waitlist
+        </button>
+      </form>
+
+      <div id="wl-success" class="hidden mt-5 p-5 rounded-2xl flex items-center gap-4" style="background:#F0F9F8; border:1.5px solid #D0ECEC;" role="alert" aria-live="polite">
+        <div class="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0" style="background:#1A535C;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="white" aria-hidden="true"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+        </div>
+        <div>
+          <div class="font-700 text-sm" style="color:#111827;">You're on the list!</div>
+          <div class="text-xs font-500" style="color:#6B7280;">We'll reach out when JurneeGo is ready.</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════════
+     FOOTER
+════════════════════════════════════ -->
+<footer class="py-12 px-6 border-t border-gray-100" role="contentinfo">
+  <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8">
+
+    <a href="#" aria-label="JurneeGo home">
+      <img src="https://jurneego.ai/assets/jurneego-logo.png" alt="JurneeGo" style="height:32px; width:auto;" />
+    </a>
+    <p class="text-sm" style="color:#9CA3AF; font-weight:500;">© 2024 JurneeGo, Inc.</p>
+
+    <div class="flex gap-8">
+      <a href="#" class="text-sm font-600 transition-colors" style="color:#1A535C;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">YouTube</a>
+      <a href="#" class="text-sm font-600 transition-colors" style="color:#1A535C;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">Facebook</a>
+      <a href="#" class="text-sm font-600 transition-colors" style="color:#1A535C;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">LinkedIn</a>
+    </div>
+
+    <a href="mailto:hello@jurneego.com" class="text-sm font-700" style="color:#111827;">hello@jurneego.com</a>
+  </div>
+</footer>
+
+
+<!-- ════════════════════════════════════
+     SCRIPTS
+════════════════════════════════════ -->
+<script>
+  function toggleNav() {
+    document.getElementById('mobile-nav').classList.toggle('hidden');
+  }
+
+  function handleWaitlist(e) {
+    e.preventDefault();
+    const name  = document.getElementById('wl-name').value.trim();
+    const email = document.getElementById('wl-email').value.trim();
+    const role  = document.getElementById('wl-role').value;
+    if (!name || !email || !role) {
+      alert('Please fill in all fields.');
+      return;
+    }
+    document.getElementById('waitlist-form').style.display = 'none';
+    document.getElementById('wl-success').classList.remove('hidden');
+  }
+
+  // Smooth scroll
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', function(e) {
+      const href = this.getAttribute('href');
+      if (href === '#') return;
+      const target = document.querySelector(href);
+      if (target) { e.preventDefault(); target.scrollIntoView({ behavior: 'smooth' }); }
+    });
+  });
+
+  // Reveal on scroll
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(en => {
+      if (en.isIntersecting) {
+        en.target.classList.add('visible');
+        io.unobserve(en.target);
+      }
+    });
+  }, { threshold: 0.12 });
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+  // prefers-reduced-motion
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    document.querySelectorAll('.reveal').forEach(el => {
+      el.style.opacity = '1';
+      el.style.transform = 'none';
+      el.style.transition = 'none';
+      el.classList.add('visible');
+    });
+  }
+</script>
+
+</body>
+</html>
