@@ -61,7 +61,7 @@
     "tsx": "^4.16.2",
     "typescript": "^5.5.3",
     "undici": "^6.19.7",
-    "vitest": "^2.0.4"
+    "vitest": "^4.1.11"
   },
   "engines": {
     "node": ">=20.0.0"
